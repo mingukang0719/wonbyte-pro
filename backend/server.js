@@ -200,9 +200,22 @@ app.get('/api/ai/status', async (req, res) => {
     
     const status = await aiService.checkProviderStatus()
     
+    // Debug: Show raw environment variable info
+    const envDebug = {
+      claudeKeyExists: !!process.env.CLAUDE_API_KEY,
+      claudeKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
+      claudeKeyFirstChars: process.env.CLAUDE_API_KEY?.substring(0, 20) || 'not set',
+      claudeKeyHasNewlines: process.env.CLAUDE_API_KEY?.includes('\n') || false,
+      claudeKeyHasSpaces: process.env.CLAUDE_API_KEY?.includes(' ') || false,
+      claudeKeyCharCodes: process.env.CLAUDE_API_KEY ? 
+        Array.from(process.env.CLAUDE_API_KEY.substring(0, 30)).map(c => c.charCodeAt(0)).join(',') : 
+        'not set'
+    }
+    
     res.json({
       success: true,
-      status
+      status,
+      debug: envDebug
     })
   } catch (error) {
     console.error('AI Status error:', error)
