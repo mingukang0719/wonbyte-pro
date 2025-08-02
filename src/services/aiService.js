@@ -41,7 +41,11 @@ class AIService {
         )
       }
 
-      const response = await fetch(`${this.baseURL}/api/ai/generate`, {
+      const url = `${this.baseURL}/api/ai/generate`
+      console.log('AI Service - Calling API:', url)
+      console.log('AI Service - Request:', request)
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
