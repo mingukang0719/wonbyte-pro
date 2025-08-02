@@ -64,10 +64,12 @@ class AIService {
     } catch (error) {
       console.error('AI Service Error:', error)
       
-      // Claude provider에서 Failed to fetch 오류 발생 시 자동으로 데모 데이터 반환
-      if (error.message.includes('Failed to fetch') && request.provider === 'claude') {
-        console.log('Claude fetch failed, falling back to demo data')
-        return await this.demoService.generateContent(
+      // Failed to fetch 오류 또는 네트워크 오류 발생 시 자동으로 데모 데이터 반환
+      if (error.message.includes('Failed to fetch') || 
+          error.name === 'NetworkError' || 
+          error.name === 'TypeError') {
+        console.log(`${request.provider} fetch failed, falling back to demo data`)
+        const fallbackResult = await this.demoService.generateContent(
           request.provider || 'claude',
           request.contentType || 'reading',
           request.prompt,
@@ -77,6 +79,12 @@ class AIService {
             contentLength: request.contentLength
           }
         )
+        
+        // fallback이 성공했으면 에러를 throw하지 않음
+        if (fallbackResult && fallbackResult.success) {
+          console.log('Fallback data generated successfully')
+          return fallbackResult
+        }
       }
       
       throw error
