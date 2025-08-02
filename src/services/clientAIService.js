@@ -1,5 +1,6 @@
 // Client-side AI Service for direct API calls
 import { apiKeys } from '../config/apiKeys'
+import { isAllowedEnvironment, apiRateLimiter, sanitizeApiResponse, logApiUsage } from '../utils/security'
 
 class ClientAIService {
   constructor() {
@@ -84,6 +85,17 @@ class ClientAIService {
 
   async generateContent(request) {
     try {
+      // 환경 체크
+      if (!isAllowedEnvironment()) {
+        throw new Error('허용되지 않은 환경에서의 API 호출입니다.')
+      }
+
+      // Rate limiting 체크
+      if (!apiRateLimiter.canMakeRequest()) {
+        const remainingTime = Math.ceil(apiRateLimiter.getRemainingTime() / 1000)
+        throw new Error(`API 호출 제한을 초과했습니다. ${remainingTime}초 후에 다시 시도해주세요.`)
+      }
+
       const { provider = 'gemini', prompt } = request
       const apiKey = apiKeys[provider]
       
@@ -108,10 +120,21 @@ class ClientAIService {
       }
 
       const data = await response.json()
-      return providerConfig.parseResponse(data)
+      const result = providerConfig.parseResponse(data)
+      
+      // Sanitize response
+      if (result.content && typeof result.content === 'string') {
+        result.content = sanitizeApiResponse(result.content)
+      }
+      
+      // Log usage
+      logApiUsage(provider, true)
+      
+      return result
 
     } catch (error) {
       console.error('Client AI Service Error:', error)
+      logApiUsage(request.provider || 'gemini', false, error)
       throw error
     }
   }
