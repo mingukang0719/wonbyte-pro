@@ -1,51 +1,45 @@
-// 환경변수 검증 스크립트
+// Environment variables validation script
 import dotenv from 'dotenv'
 
 dotenv.config()
 
-console.log('=== Environment Variables Validation ===')
-console.log('NODE_ENV:', process.env.NODE_ENV || 'not set')
-console.log('PORT:', process.env.PORT || 'not set')
+console.log('============================================')
+console.log('🔍 Environment Variables Check')
+console.log('============================================')
 
-// Supabase
-console.log('\n--- Supabase Config ---')
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '✓ Set' : '✗ Missing')
-console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? `✓ Set (${process.env.SUPABASE_ANON_KEY.substring(0, 20)}...)` : '✗ Missing')
-console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓ Set' : '✗ Missing')
-
-// AI API Keys
-console.log('\n--- AI API Keys ---')
-console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? `✓ Set (${process.env.OPENAI_API_KEY.substring(0, 15)}...)` : '✗ Missing')
-console.log('CLAUDE_API_KEY:', process.env.CLAUDE_API_KEY ? `✓ Set (${process.env.CLAUDE_API_KEY.substring(0, 15)}...)` : '✗ Missing')
-console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? `✓ Set (${process.env.GEMINI_API_KEY.substring(0, 10)}...)` : '✗ Missing')
-
-// Security Keys
-console.log('\n--- Security Keys ---')
-console.log('JWT_SECRET:', process.env.JWT_SECRET ? '✓ Set' : '✗ Missing')
-console.log('API_KEY_ENCRYPTION_SECRET:', process.env.API_KEY_ENCRYPTION_SECRET ? '✓ Set' : '✗ Missing')
-
-// Check for quotes in API keys
-console.log('\n--- API Key Format Check ---')
-if (process.env.OPENAI_API_KEY?.includes('"')) {
-  console.log('⚠️  OPENAI_API_KEY contains quotes - this will cause issues!')
-}
-if (process.env.CLAUDE_API_KEY?.includes('"')) {
-  console.log('⚠️  CLAUDE_API_KEY contains quotes - this will cause issues!')
-}
-if (process.env.GEMINI_API_KEY?.includes('"')) {
-  console.log('⚠️  GEMINI_API_KEY contains quotes - this will cause issues!')
+// Check CLAUDE_API_KEY (most important)
+const claudeKey = process.env.CLAUDE_API_KEY
+if (claudeKey) {
+  const cleaned = claudeKey.trim().replace(/^["']|["']$/g, '')
+  console.log('✅ CLAUDE_API_KEY:')
+  console.log(`   Original length: ${claudeKey.length}`)
+  console.log(`   Cleaned length: ${cleaned.length}`)
+  console.log(`   Starts with: ${cleaned.substring(0, 15)}...`)
+  console.log(`   Has quotes: ${claudeKey.includes('"') || claudeKey.includes("'")}`)
+  
+  if (claudeKey !== cleaned) {
+    console.log('   ⚠️  WARNING: API key contains quotes or spaces!')
+    console.log('   Fix in .env file: CLAUDE_API_KEY=your-key-here (no quotes)')
+  }
+} else {
+  console.log('❌ CLAUDE_API_KEY: Not found')
 }
 
-console.log('\n=== Validation Complete ===')
+// Check PORT
+const port = process.env.PORT
+console.log(`\n📡 PORT: ${port || '3001 (default)'}`)
 
-// Render 환경변수 설정 가이드
-console.log('\n📝 Render Environment Variables Setup:')
+// Check NODE_ENV
+const nodeEnv = process.env.NODE_ENV
+console.log(`\n🌍 NODE_ENV: ${nodeEnv || 'development (default)'}`)
+
+console.log('\n============================================')
+console.log('💡 Render Setup Instructions:')
 console.log('1. Go to https://dashboard.render.com')
 console.log('2. Select your backend service')
 console.log('3. Go to Environment tab')
-console.log('4. Add the following variables WITHOUT quotes:')
-console.log('   - OPENAI_API_KEY=sk-proj-...')
-console.log('   - CLAUDE_API_KEY=sk-ant-api03-...')
-console.log('   - GEMINI_API_KEY=AIzaSy...')
+console.log('4. Add CLAUDE_API_KEY WITHOUT quotes:')
+console.log('   CLAUDE_API_KEY=sk-ant-api03-xxxxx')
 console.log('5. Click "Save Changes"')
-console.log('6. The service will automatically redeploy')
+console.log('6. Service will automatically redeploy')
+console.log('============================================')

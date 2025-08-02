@@ -1,126 +1,103 @@
-# 원바이트 프로 백엔드
+# EduText Pro Backend
 
-교육 콘텐츠 생성 및 관리를 위한 백엔드 서버
+한국어 문해력 교육 플랫폼 백엔드 서비스
 
-## 기술 스택
-
-- Node.js + Express
-- Supabase (PostgreSQL)
-- AI Integration (OpenAI, Claude, Gemini)
-- JWT Authentication
-
-## 시작하기
-
-### 1. 환경변수 설정
-
-`.env` 파일을 생성하고 다음 변수들을 설정하세요:
-
-```env
-# Server Configuration
-PORT=3001
-NODE_ENV=development
-
-# Supabase Configuration
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_KEY=your_supabase_service_key
-
-# AI API Keys
-OPENAI_API_KEY=your_openai_api_key
-CLAUDE_API_KEY=your_claude_api_key
-GEMINI_API_KEY=your_gemini_api_key
-
-# Security Keys
-JWT_SECRET=your-jwt-secret
-API_KEY_ENCRYPTION_SECRET=your-encryption-secret
-
-# Frontend URL
-FRONTEND_URL=http://localhost:5173
-```
-
-### 2. Supabase 설정
-
-1. [Supabase](https://supabase.com)에서 새 프로젝트 생성
-2. `database/schema.sql` 파일의 SQL을 Supabase SQL Editor에서 실행
-3. 프로젝트 설정에서 URL과 API 키를 복사하여 `.env` 파일에 입력
-
-### 3. 의존성 설치 및 실행
+## 🚀 빠른 시작
 
 ```bash
 # 의존성 설치
 npm install
 
-# 개발 서버 실행
-npm run dev
+# 환경변수 확인
+npm run validate-env
 
-# 프로덕션 실행
+# 서버 시작
 npm start
+
+# 테스트 실행
+npm test
 ```
 
-## API 엔드포인트
+## 📋 필수 요구사항
 
-### 인증
-- `POST /api/admin/login` - 관리자 로그인
+- Node.js >= 18.0.0
+- Claude API Key
 
-### AI 콘텐츠 생성
-- `POST /api/ai/generate` - AI 콘텐츠 생성
-- `GET /api/ai/status` - AI 제공자 상태 확인
+## 🔧 환경변수 설정
 
-### PDF 생성
-- `POST /api/pdf/generate` - PDF 생성
-- `GET /api/pdf/download/:fileName` - PDF 다운로드
+`.env` 파일을 backend 디렉토리에 생성:
 
-### 템플릿 관리
-- `GET /api/admin/templates` - 템플릿 목록
-- `POST /api/admin/templates` - 템플릿 생성
-- `PUT /api/admin/templates/:id` - 템플릿 수정
-- `DELETE /api/admin/templates/:id` - 템플릿 삭제
+```env
+CLAUDE_API_KEY=sk-ant-api03-xxxxx
+PORT=3001
+```
 
-### 통계
-- `GET /api/admin/stats` - 사용 통계 (인증 필요)
+**중요**: API 키에 따옴표를 사용하지 마세요!
 
-## 데이터베이스 구조
+## 📁 프로젝트 구조
 
-### 주요 테이블
-- `users` - 사용자 정보
-- `ai_generations` - AI 생성 로그
-- `generated_content` - 생성된 콘텐츠
-- `reading_templates` - 읽기 템플릿
-- `user_activities` - 사용자 활동 로그
-- `api_keys` - 암호화된 API 키
-- `pdf_generation_logs` - PDF 생성 로그
+```
+backend/
+├── newServer.js      # 메인 서버 (간소화 버전)
+├── server.js         # 이전 서버 (복잡한 버전)
+├── simpleServer.js   # 디버그 서버 (최소 버전)
+├── validateEnv.js    # 환경변수 검증
+├── testLocal.js      # 로컬 테스트 스크립트
+├── package.json      # 의존성
+└── .env             # 환경변수 (직접 생성)
+```
 
-## 보안
+## 🌐 API 엔드포인트
 
-- JWT 기반 인증
-- API 키 암호화 저장
-- Rate Limiting 적용
-- CORS 설정
-- Helmet.js로 보안 헤더 설정
-- Row Level Security (RLS) 정책 적용
+### 상태 확인
+- `GET /api/health` - 서버 상태 확인
+- `GET /api/test` - 기본 테스트
+- `GET /api/ai/status` - AI 서비스 상태
 
-## 배포
+### AI 생성
+- `POST /api/ai/generate` - 읽기 콘텐츠 생성
+- `POST /api/ai/extract-vocabulary` - 텍스트에서 어휘 추출
+- `POST /api/ai/generate-problems` - 이해력 문제 생성
+- `POST /api/ai/analyze-text` - 텍스트 난이도 분석
 
-### Railway 배포
-`railway.toml` 파일이 포함되어 있어 Railway에 쉽게 배포할 수 있습니다.
+### PDF
+- `POST /api/pdf/generate` - 콘텐츠를 PDF로 생성
+
+## 🚀 배포
+
+자세한 배포 지침은 [DEPLOY_GUIDE.md](./DEPLOY_GUIDE.md)를 참조하세요.
+
+## 🧪 테스트
 
 ```bash
-railway login
-railway link
-railway up
+# 로컬 테스트 실행
+npm test
+
+# 배포된 서버 테스트
+curl https://edutext-pro-backend.onrender.com/api/health
 ```
 
-### 환경변수 설정
-Railway 대시보드에서 모든 환경변수를 설정하세요.
+## 🐛 문제 해결
 
-## 문제 해결
+### 일반적인 문제
 
-### Supabase 연결 오류
-- Supabase URL과 키가 올바른지 확인
-- 네트워크 연결 상태 확인
-- RLS 정책이 올바르게 설정되었는지 확인
+1. **"Failed to fetch" 오류**
+   - 서버가 실행 중인지 확인
+   - CORS 설정 확인
+   - API 키 확인
 
-### AI API 오류
-- API 키가 유효한지 확인
-- API 사용량 한도 확인
-- 네트워크 연결 상태 확인
+2. **404 오류**
+   - 엔드포인트 URL 확인
+   - HTTP 메서드 (GET/POST) 확인
+
+3. **AI 서비스 사용 불가**
+   - .env의 CLAUDE_API_KEY 확인
+   - API 키에서 따옴표 제거
+   - API 키 유효성 확인
+
+## 📝 참고사항
+
+- 현재 Claude AI만 지원
+- CORS는 모든 origin 허용 (프로덕션에서 업데이트 필요)
+- 모든 응답은 JSON 형식
+- 한국어 콘텐츠 생성에 최적화

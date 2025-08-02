@@ -1,4 +1,4 @@
-// EduText Pro Backend - Simplified Version
+// EduText Pro Backend - Ultra Simple Version
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -10,65 +10,52 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Enable CORS for all origins during debugging
-app.use(cors({
-  origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}))
+// Enable CORS for all origins
+app.use(cors())
 
-// Body parser middleware
+// Body parser
 app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Request logging middleware
+// Request logging
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
-  if (req.method === 'POST') {
+  if (req.body && Object.keys(req.body).length > 0) {
     console.log('Body:', JSON.stringify(req.body).substring(0, 200))
   }
   next()
 })
 
-// Helper function to clean API keys
-function cleanApiKey(key) {
-  if (!key) return null
-  return key.toString().trim().replace(/^["']|["']$/g, '')
-}
+// Initialize Claude client
+let claude = null
+const claudeKey = process.env.CLAUDE_API_KEY?.trim().replace(/^["']|["']$/g, '')
 
-// Initialize AI clients
-let claudeClient = null
-const claudeKey = cleanApiKey(process.env.CLAUDE_API_KEY)
 if (claudeKey) {
   try {
-    claudeClient = new Anthropic({
-      apiKey: claudeKey
-    })
-    console.log('✅ Claude client initialized')
+    claude = new Anthropic({ apiKey: claudeKey })
+    console.log('✅ Claude initialized successfully')
   } catch (error) {
-    console.error('❌ Failed to initialize Claude:', error.message)
+    console.error('❌ Claude initialization failed:', error.message)
   }
+} else {
+  console.warn('⚠️ CLAUDE_API_KEY not found')
 }
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     name: 'EduText Pro Backend',
-    version: '2.0',
+    version: '3.0',
     status: 'running',
-    timestamp: new Date().toISOString()
+    claude: claude ? 'ready' : 'not configured'
   })
 })
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    timestamp: new Date().toISOString(),
-    services: {
-      claude: claudeClient ? 'active' : 'inactive'
-    }
+    claude: claude ? 'active' : 'inactive',
+    timestamp: new Date().toISOString()
   })
 })
 
@@ -81,14 +68,14 @@ app.get('/api/test', (req, res) => {
   })
 })
 
-// AI status endpoint
+// AI status
 app.get('/api/ai/status', (req, res) => {
   res.json({
     success: true,
     providers: {
       claude: {
-        available: !!claudeClient,
-        status: claudeClient ? 'ready' : 'not configured'
+        available: !!claude,
+        status: claude ? 'ready' : 'not configured'
       }
     }
   })
@@ -96,33 +83,20 @@ app.get('/api/ai/status', (req, res) => {
 
 // Main AI generation endpoint
 app.post('/api/ai/generate', async (req, res) => {
+  console.log('🚀 AI Generate called')
+  
   try {
-    const { 
-      prompt,
-      provider = 'claude',
-      contentType = 'reading',
-      targetAge = 10,
-      contentLength = 800
-    } = req.body
-
-    console.log('Generate request:', { provider, contentType, promptLength: prompt?.length })
+    const { prompt, contentType = 'reading', targetAge = 10, contentLength = 800 } = req.body
 
     if (!prompt) {
-      return res.status(400).json({
-        success: false,
-        error: 'Prompt is required'
-      })
+      return res.status(400).json({ success: false, error: 'Prompt is required' })
     }
 
-    // For now, only support Claude
-    if (provider !== 'claude' || !claudeClient) {
-      return res.status(400).json({
-        success: false,
-        error: 'Only Claude is currently available'
-      })
+    if (!claude) {
+      return res.status(503).json({ success: false, error: 'AI service not available' })
     }
 
-    // Create the full prompt based on content type
+    // Build Korean learning prompt
     let fullPrompt = prompt
     if (contentType === 'reading') {
       fullPrompt = `한국어 읽기 지문을 생성해주세요.
@@ -137,30 +111,26 @@ app.post('/api/ai/generate', async (req, res) => {
 - 정확히 ${contentLength}자 내외로 작성`
     }
 
-    // Call Claude API
-    console.log('Calling Claude API...')
-    const response = await claudeClient.messages.create({
+    console.log('📝 Calling Claude API...')
+    const response = await claude.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 2000,
       temperature: 0.7,
-      messages: [{
-        role: 'user',
-        content: fullPrompt
-      }]
+      messages: [{ role: 'user', content: fullPrompt }]
     })
 
     const content = response.content[0].text
+    console.log('✅ Claude response received:', content.substring(0, 100) + '...')
 
     res.json({
       success: true,
       content: content,
       provider: 'claude',
-      model: 'claude-3-haiku-20240307',
-      timestamp: new Date().toISOString()
+      model: 'claude-3-haiku-20240307'
     })
 
   } catch (error) {
-    console.error('Generation error:', error)
+    console.error('❌ Generation error:', error)
     res.status(500).json({
       success: false,
       error: 'Failed to generate content',
@@ -169,51 +139,45 @@ app.post('/api/ai/generate', async (req, res) => {
   }
 })
 
-// Extract vocabulary endpoint
+// Extract vocabulary
 app.post('/api/ai/extract-vocabulary', async (req, res) => {
+  console.log('📚 Extract vocabulary called')
+  
   try {
     const { text, grade = 'elem4', count = 10 } = req.body
 
     if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Text is required'
-      })
+      return res.status(400).json({ success: false, error: 'Text is required' })
     }
 
-    if (!claudeClient) {
-      return res.status(400).json({
-        success: false,
-        error: 'AI service not available'
-      })
+    if (!claude) {
+      return res.status(503).json({ success: false, error: 'AI service not available' })
     }
 
     const prompt = `다음 지문에서 ${grade} 학년 수준에 맞는 중요한 어휘 ${count}개를 추출하고, 각 어휘의 뜻과 예문을 제공해주세요.
 
 지문: ${text}
 
-다음 JSON 형식으로 응답해주세요:
+다음 JSON 형식으로만 응답해주세요 (다른 설명 없이):
 {
   "vocabulary": [
     {
       "word": "어휘",
       "meaning": "의미 설명",
       "example": "예문",
-      "difficulty": 1-5 (난이도)
+      "difficulty": 1
     }
   ]
 }`
 
-    const response = await claudeClient.messages.create({
+    const response = await claude.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 2000,
       temperature: 0.5,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      messages: [{ role: 'user', content: prompt }]
     })
 
+    // Parse JSON from response
     let vocabulary = []
     try {
       const content = response.content[0].text
@@ -222,8 +186,14 @@ app.post('/api/ai/extract-vocabulary', async (req, res) => {
         const parsed = JSON.parse(jsonMatch[0])
         vocabulary = parsed.vocabulary || []
       }
-    } catch (parseError) {
-      console.error('Failed to parse vocabulary:', parseError)
+    } catch (e) {
+      console.error('JSON parse error:', e)
+      vocabulary = [{
+        word: "파싱 오류",
+        meaning: "JSON 파싱에 실패했습니다",
+        example: "다시 시도해주세요",
+        difficulty: 1
+      }]
     }
 
     res.json({
@@ -233,7 +203,7 @@ app.post('/api/ai/extract-vocabulary', async (req, res) => {
     })
 
   } catch (error) {
-    console.error('Vocabulary extraction error:', error)
+    console.error('❌ Vocabulary extraction error:', error)
     res.status(500).json({
       success: false,
       error: 'Failed to extract vocabulary',
@@ -242,30 +212,26 @@ app.post('/api/ai/extract-vocabulary', async (req, res) => {
   }
 })
 
-// Generate problems endpoint
+// Generate problems
 app.post('/api/ai/generate-problems', async (req, res) => {
+  console.log('📝 Generate problems called')
+  
   try {
     const { text, type = 'reading', count = 5, grade = 'elem4' } = req.body
 
     if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Text is required'
-      })
+      return res.status(400).json({ success: false, error: 'Text is required' })
     }
 
-    if (!claudeClient) {
-      return res.status(400).json({
-        success: false,
-        error: 'AI service not available'
-      })
+    if (!claude) {
+      return res.status(503).json({ success: false, error: 'AI service not available' })
     }
 
     const prompt = `다음 지문을 바탕으로 ${grade} 학년 수준의 ${type === 'vocabulary' ? '어휘' : '독해'} 문제 ${count}개를 생성해주세요.
 
 지문: ${text}
 
-다음 JSON 형식으로 응답해주세요:
+다음 JSON 형식으로만 응답해주세요 (다른 설명 없이):
 {
   "problems": [
     {
@@ -277,16 +243,14 @@ app.post('/api/ai/generate-problems', async (req, res) => {
   ]
 }`
 
-    const response = await claudeClient.messages.create({
+    const response = await claude.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 3000,
       temperature: 0.7,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      messages: [{ role: 'user', content: prompt }]
     })
 
+    // Parse JSON from response
     let problems = []
     try {
       const content = response.content[0].text
@@ -295,8 +259,14 @@ app.post('/api/ai/generate-problems', async (req, res) => {
         const parsed = JSON.parse(jsonMatch[0])
         problems = parsed.problems || []
       }
-    } catch (parseError) {
-      console.error('Failed to parse problems:', parseError)
+    } catch (e) {
+      console.error('JSON parse error:', e)
+      problems = [{
+        question: "파싱 오류가 발생했습니다",
+        options: ["다시", "시도해", "주세요", "!"],
+        answer: 0,
+        explanation: "JSON 파싱에 실패했습니다"
+      }]
     }
 
     res.json({
@@ -306,7 +276,7 @@ app.post('/api/ai/generate-problems', async (req, res) => {
     })
 
   } catch (error) {
-    console.error('Problem generation error:', error)
+    console.error('❌ Problem generation error:', error)
     res.status(500).json({
       success: false,
       error: 'Failed to generate problems',
@@ -315,23 +285,19 @@ app.post('/api/ai/generate-problems', async (req, res) => {
   }
 })
 
-// Analyze text endpoint
+// Analyze text
 app.post('/api/ai/analyze-text', async (req, res) => {
+  console.log('🔍 Analyze text called')
+  
   try {
     const { text, targetGrade = 'elem4' } = req.body
 
     if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Text is required'
-      })
+      return res.status(400).json({ success: false, error: 'Text is required' })
     }
 
-    if (!claudeClient) {
-      return res.status(400).json({
-        success: false,
-        error: 'AI service not available'
-      })
+    if (!claude) {
+      return res.status(503).json({ success: false, error: 'AI service not available' })
     }
 
     const prompt = `다음 지문의 문해력 난이도를 ${targetGrade} 학년 기준으로 분석해주세요.
@@ -347,14 +313,11 @@ app.post('/api/ai/analyze-text', async (req, res) => {
 
 각 항목을 점수와 함께 설명하고, 총평을 제공해주세요.`
 
-    const response = await claudeClient.messages.create({
+    const response = await claude.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 2000,
       temperature: 0.5,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      messages: [{ role: 'user', content: prompt }]
     })
 
     res.json({
@@ -364,7 +327,7 @@ app.post('/api/ai/analyze-text', async (req, res) => {
     })
 
   } catch (error) {
-    console.error('Text analysis error:', error)
+    console.error('❌ Text analysis error:', error)
     res.status(500).json({
       success: false,
       error: 'Failed to analyze text',
@@ -373,49 +336,60 @@ app.post('/api/ai/analyze-text', async (req, res) => {
   }
 })
 
-// PDF generation endpoint
+// PDF generation
 app.post('/api/pdf/generate', async (req, res) => {
+  console.log('📄 PDF generate called')
+  
   try {
-    const { title, blocks = [], ...otherData } = req.body
+    const { title = 'EduText Pro', blocks = [], ...data } = req.body
 
-    // Convert individual fields to blocks if needed
-    let pdfBlocks = blocks
-    if (!pdfBlocks.length && otherData.text) {
-      pdfBlocks = []
-      
-      if (otherData.text) {
-        pdfBlocks.push({
-          type: 'text',
-          title: '지문',
-          content: otherData.text
-        })
-      }
-      
-      if (otherData.selectedVocabulary?.length) {
-        pdfBlocks.push({
-          type: 'vocabulary',
-          title: '핵심 어휘',
-          content: otherData.selectedVocabulary
-        })
-      }
-      
-      if (otherData.generatedProblems?.length) {
-        pdfBlocks.push({
-          type: 'problems',
-          title: '문제',
-          content: otherData.generatedProblems
-        })
-      }
+    // Simple HTML response for now
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <style>
+    body { font-family: 'Nanum Gothic', sans-serif; padding: 40px; }
+    h1 { color: #333; }
+    .block { margin: 20px 0; }
+    .vocabulary { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    .problem { margin: 15px 0; padding: 10px; border-left: 3px solid #4285f4; }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  ${blocks.map(block => {
+    if (block.type === 'text') {
+      return `<div class="block"><h2>${block.title}</h2><p>${block.content}</p></div>`
+    } else if (block.type === 'vocabulary') {
+      return `<div class="block vocabulary"><h2>${block.title}</h2>${
+        block.content.map(v => `<p><strong>${v.word}</strong>: ${v.meaning}</p>`).join('')
+      }</div>`
+    } else if (block.type === 'problems') {
+      return `<div class="block"><h2>${block.title}</h2>${
+        block.content.map((p, i) => `
+          <div class="problem">
+            <p><strong>${i + 1}. ${p.question}</strong></p>
+            <ol>${p.options.map(o => `<li>${o}</li>`).join('')}</ol>
+          </div>
+        `).join('')
+      }</div>`
     }
+    return ''
+  }).join('')}
+</body>
+</html>`
 
     res.json({
       success: true,
-      html: `<html><body><h1>${title}</h1><p>PDF content here</p></body></html>`,
+      html,
       filename: `edutext-${Date.now()}.pdf`
     })
 
   } catch (error) {
-    console.error('PDF generation error:', error)
+    console.error('❌ PDF generation error:', error)
     res.status(500).json({
       success: false,
       error: 'Failed to generate PDF',
@@ -426,17 +400,27 @@ app.post('/api/pdf/generate', async (req, res) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-  console.log(`404 - Not found: ${req.method} ${req.originalUrl}`)
+  console.log(`❌ 404: ${req.method} ${req.originalUrl}`)
   res.status(404).json({
     error: 'Endpoint not found',
     path: req.originalUrl,
-    method: req.method
+    method: req.method,
+    availableEndpoints: [
+      'GET /api/health',
+      'GET /api/test',
+      'GET /api/ai/status',
+      'POST /api/ai/generate',
+      'POST /api/ai/extract-vocabulary',
+      'POST /api/ai/generate-problems',
+      'POST /api/ai/analyze-text',
+      'POST /api/pdf/generate'
+    ]
   })
 })
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Server error:', err)
+  console.error('💥 Server error:', err)
   res.status(500).json({
     error: 'Internal server error',
     message: err.message
@@ -444,12 +428,12 @@ app.use((err, req, res, next) => {
 })
 
 // Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log('===========================================')
-  console.log('🚀 EduText Pro Backend v2.0')
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('============================================')
+  console.log('🚀 EduText Pro Backend v3.0')
   console.log(`📡 Server running on port ${PORT}`)
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log('===========================================')
+  console.log(`🔑 Claude: ${claude ? '✅ Ready' : '❌ Not configured'}`)
+  console.log('============================================')
   console.log('📋 Available endpoints:')
   console.log('  GET  /api/health')
   console.log('  GET  /api/test')
@@ -459,10 +443,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('  POST /api/ai/generate-problems')
   console.log('  POST /api/ai/analyze-text')
   console.log('  POST /api/pdf/generate')
-  console.log('===========================================')
-  console.log('🔑 API Keys:')
-  console.log(`  Claude: ${claudeKey ? '✅ Configured' : '❌ Missing'}`)
-  console.log('===========================================')
+  console.log('============================================')
 })
 
 export default app

@@ -5,11 +5,12 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "start": "node newServer.js",
+    "start:old": "node server.js",
     "start:simple": "node simpleServer.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon newServer.js",
     "build": "echo 'Backend build completed'",
-    "test": "echo 'No tests specified'",
+    "test": "node testLocal.js",
     "validate-env": "node validateEnv.js"
   },
   "dependencies": {
@@ -22,7 +23,8 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
