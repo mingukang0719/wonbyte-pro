@@ -42,8 +42,10 @@ class AIService {
       }
 
       const url = `${this.baseURL}/api/ai/generate`
-      console.log('AI Service - Calling API:', url)
+      console.log('AI Service - Base URL:', this.baseURL)
+      console.log('AI Service - Full URL:', url)
       console.log('AI Service - Request:', request)
+      console.log('AI Service - Timestamp:', new Date().toISOString())
       
       const response = await fetch(url, {
         method: 'POST',
