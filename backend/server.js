@@ -10,8 +10,27 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// CORS - Allow all origins
-app.use(cors())
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://wonbyte-pro.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173'
+    ]
+    // Allow requests with no origin (like mobile apps or postman)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(null, true) // Temporarily allow all origins for testing
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
+app.use(cors(corsOptions))
 app.use(express.json({ limit: '10mb' }))
 
 // Logging
