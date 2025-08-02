@@ -20,6 +20,7 @@ import ErrorMessage from '../components/common/ErrorMessage'
 import AnalysisChart from '../components/literacy/AnalysisChart'
 import ProblemCard from '../components/literacy/ProblemCard'
 import TextDisplay from '../components/literacy/TextDisplay'
+import VocabularyExtractor from '../components/literacy/VocabularyExtractor'
 
 export default function ReadingTrainerPage() {
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
@@ -48,6 +49,9 @@ export default function ReadingTrainerPage() {
   const [vocabularyProblems, setVocabularyProblems] = useState([])
   const [readingProblems, setReadingProblems] = useState([])
   const [selectedProblemCount] = useState({ vocabulary: 10, reading: 5 })
+  
+  // 어휘 관련 상태
+  const [selectedVocabulary, setSelectedVocabulary] = useState([])
   
   // 사용자 입력 관련 상태
   const [inputType, setInputType] = useState('paste')
@@ -95,6 +99,11 @@ export default function ReadingTrainerPage() {
     const textToAnalyze = mode === 'generate' ? generatedText : userText
     await analyzeText(textToAnalyze, selectedGrade)
   }, [mode, generatedText, userText, selectedGrade, analyzeText])
+  
+  // 어휘 선택 변경 핸들러
+  const handleVocabularyChange = useCallback((vocabularyList) => {
+    setSelectedVocabulary(vocabularyList)
+  }, [])
   
   // 파일 업로드 처리 (메모이제이션)
   const handleFileUpload = useCallback(async (event) => {
@@ -225,6 +234,7 @@ export default function ReadingTrainerPage() {
         grade: gradeLabel,
         text: textToExport,
         analysisResult,
+        selectedVocabulary: selectedVocabulary.filter(word => word.isChecked),
         vocabularyProblems,
         readingProblems
       })
@@ -234,7 +244,7 @@ export default function ReadingTrainerPage() {
       console.error('PDF 생성 오류:', error)
       setErrorMessage('PDF 생성 중 오류가 발생했습니다')
     }
-  }, [mode, generatedText, userText, selectedGrade, analysisResult, vocabularyProblems, readingProblems])
+  }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, vocabularyProblems, readingProblems])
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -665,6 +675,15 @@ export default function ReadingTrainerPage() {
               </button>
 
               {analysisResult && <AnalysisChart analysisResult={analysisResult} />}
+            </div>
+
+            {/* 핵심 어휘 추출 */}
+            <div className="mb-6">
+              <VocabularyExtractor
+                text={mode === 'generate' ? generatedText : userText}
+                gradeLevel={selectedGrade}
+                onVocabularyChange={handleVocabularyChange}
+              />
             </div>
 
             {/* 다음 단계 버튼 */}
