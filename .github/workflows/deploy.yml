@@ -1,8 +1,8 @@
-name: Deploy to GitHub Pages
-
+name: Build and Deploy
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,44 +16,56 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm install
-      
-    - name: Build
-      run: npm run build
-      
-    - name: Create 404.html for SPA routing
-      run: |
-        cat > ./dist/404.html << 'EOF'
-        <!doctype html><html lang="ko"><head><meta charset="UTF-8"/><link rel="icon" type="image/svg+xml" href="/wonbyte-pro/vite.svg"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Wonbyte Pro - AI 한국어 문해력 훈련</title><script>
-              (function(l) {
-                var segmentCount = 1;
-                var repo = '/wonbyte-pro';
-                
-                l.replace(
-                  l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-                  repo + '/?p=/' +
-                  l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
-                  (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-                  l.hash
-                );
-              }(window.location))
-            </script></head><body></body></html>
-        EOF
-      
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies 📦
+        run: npm ci
+
+      - name: Build 🔧
+        run: npm run build
+
+      - name: Create .nojekyll file
+        run: touch ./dist/.nojekyll
+
+      - name: Create 404.html for SPA routing
+        run: |
+          cat > ./dist/404.html << 'EOF'
+          <!doctype html><html lang="ko"><head><meta charset="UTF-8"/><link rel="icon" type="image/svg+xml" href="/wonbyte-pro/vite.svg"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Wonbyte Pro - AI 한국어 문해력 훈련</title><script>
+                (function(l) {
+                  var segmentCount = 1;
+                  var repo = '/wonbyte-pro';
+                  
+                  l.replace(
+                    l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                    repo + '/?p=/' +
+                    l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+                    (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                    l.hash
+                  );
+                }(window.location))
+          </script></head><body></body></html>
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
