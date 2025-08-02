@@ -107,9 +107,10 @@ app.post('/api/ai/generate', async (req, res) => {
   try {
     const { 
       provider = 'gemini',
-      contentType = 'vocabulary',
+      contentType = 'reading',
       difficulty = 'intermediate', 
-      targetAge = 'adult',
+      targetAge = 'elem4',
+      contentLength = '800',
       prompt,
       userId 
     } = req.body
@@ -121,6 +122,15 @@ app.post('/api/ai/generate', async (req, res) => {
       })
     }
 
+    console.log('AI Generation Request:', {
+      provider,
+      contentType,
+      difficulty,
+      targetAge,
+      contentLength,
+      promptLength: prompt.length
+    })
+
     // AI 서비스 동적 import (실제 구현에서는 상단에서 import)
     const AIService = (await import('./services/aiService.js')).default
     const aiService = new AIService()
@@ -130,6 +140,7 @@ app.post('/api/ai/generate', async (req, res) => {
       contentType,
       difficulty,
       targetAge,
+      contentLength,
       prompt,
       userId
     })

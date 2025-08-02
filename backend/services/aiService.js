@@ -94,15 +94,27 @@ class AIService {
       }
     }
     
-    // Valid OpenAI key should start with sk- and be longer than 40 chars
+    // OpenAI API 키: sk-로 시작하고 40자 이상
     if (key.startsWith('sk-') && key.length > 40) {
       console.log(`Valid OpenAI key detected: ${key.substring(0, 10)}...`)
       return key
     }
     
-    // Valid Claude key should be longer than 30 chars and not start with sk-
+    // Claude API 키: sk-ant-로 시작하거나 길이가 50자 이상
+    if ((key.startsWith('sk-ant-') || key.length > 50) && key.length > 30) {
+      console.log(`Valid Claude key detected: ${key.substring(0, 10)}...`)
+      return key
+    }
+    
+    // Gemini API 키: 30자 이상이고 sk-로 시작하지 않음
     if (key.length > 30 && !key.startsWith('sk-')) {
-      console.log(`Valid Claude/Gemini key detected: ${key.substring(0, 10)}...`)
+      console.log(`Valid Gemini key detected: ${key.substring(0, 10)}...`)
+      return key
+    }
+    
+    // 길이가 20자 이상이면 일단 유효한 것으로 간주 (너무 엄격한 검증 완화)
+    if (key.length > 20) {
+      console.log(`API key accepted with relaxed validation: ${key.substring(0, 10)}... (length: ${key.length})`)
       return key
     }
     
@@ -150,6 +162,7 @@ class AIService {
 
     try {
       let result
+      console.log('Building prompt with parameters:', { contentType, difficulty, targetAge, contentLength })
       const enhancedPrompt = this.buildKoreanLearningPrompt(prompt, contentType, { difficulty, targetAge, contentLength })
 
       if (provider === 'openai' || provider === 'gpt') {
@@ -181,10 +194,13 @@ class AIService {
 
   async generateWithOpenAI(prompt) {
     try {
-      // API 키가 없거나 테스트 키인 경우 모의 응답 제공
-      if (!this.openaiKey || this.openaiKey === 'your_openai_api_key_here') {
+      // API 키가 없거나 초기화되지 않은 경우만 모의 응답 제공
+      if (!this.openaiKey) {
+        console.log('OpenAI: No valid API key, using mock response')
         return this.getMockResponse('openai', prompt)
       }
+      
+      console.log('OpenAI: Using real API with key:', this.openaiKey.substring(0, 10) + '...')
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -193,7 +209,7 @@ class AIService {
           'Authorization': `Bearer ${this.openaiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-4o',
           messages: [
             {
               role: 'system',
@@ -239,10 +255,13 @@ class AIService {
 
   async generateWithGemini(prompt) {
     try {
-      // API 키가 없거나 테스트 키인 경우 또는 클라이언트가 초기화되지 않은 경우 모의 응답 제공
-      if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here' || !this.gemini) {
+      // Gemini 클라이언트가 초기화되지 않은 경우만 모의 응답 제공
+      if (!this.gemini || !this.geminiModel) {
+        console.log('Gemini: Client not initialized, using mock response')
         return this.getMockResponse('gemini', prompt)
       }
+      
+      console.log('Gemini: Using real API with initialized client')
 
       const result = await this.geminiModel.generateContent(prompt)
       const response = await result.response
@@ -271,13 +290,16 @@ class AIService {
 
   async generateWithClaude(prompt) {
     try {
-      // API 키가 없거나 테스트 키인 경우 또는 클라이언트가 초기화되지 않은 경우 모의 응답 제공
-      if (!process.env.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY === 'your_claude_api_key_here' || !this.claude) {
+      // Claude 클라이언트가 초기화되지 않은 경우만 모의 응답 제공
+      if (!this.claude) {
+        console.log('Claude: Client not initialized, using mock response')
         return this.getMockResponse('claude', prompt)
       }
+      
+      console.log('Claude: Using real API with initialized client')
 
       const message = await this.claude.messages.create({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4096,
         temperature: 0.7,
         messages: [{
