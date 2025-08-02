@@ -335,7 +335,34 @@ class AIService {
       
       console.log('Claude: Using real API with initialized client')
 
-      const message = await this.claude.messages.create({
+      // Ultra-aggressive key cleaning at the last moment
+      const rawKey = process.env.CLAUDE_API_KEY
+      console.log('Claude raw key debug:', {
+        originalLength: rawKey?.length,
+        hasNewlines: rawKey?.includes('\n'),
+        hasSpaces: rawKey?.includes(' '),
+        firstChars: rawKey?.substring(0, 20)
+      })
+
+      // Create a fresh Claude client with ultra-cleaned key
+      const ultraCleanKey = rawKey
+        ? rawKey.toString().replace(/[\s\r\n\t\u0000-\u001F\u007F-\u009F]/g, '')
+        : null
+
+      console.log('Claude ultra-clean key:', {
+        cleanedLength: ultraCleanKey?.length,
+        cleanedStart: ultraCleanKey?.substring(0, 20)
+      })
+
+      if (!ultraCleanKey) {
+        throw new Error('No valid Claude API key after cleaning')
+      }
+
+      const freshClaude = new (await import('@anthropic-ai/sdk')).default({
+        apiKey: ultraCleanKey
+      })
+
+      const message = await freshClaude.messages.create({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4096,
         temperature: 0.7,
