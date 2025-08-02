@@ -60,6 +60,7 @@ export default function ReadingTrainerPage() {
   // AI 지문 생성
   const handleGenerateText = useCallback(async () => {
     setErrorMessage(null)
+    setGeneratedText('') // 이전 텍스트 초기화
     try {
       const topic = selectedTopic === 'custom' ? customTopic : selectedTopic
       const length = selectedLength === 'custom' ? customLength : selectedLength
