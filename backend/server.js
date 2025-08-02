@@ -97,8 +97,11 @@ app.get('/api/health', async (req, res) => {
       environment: {
         nodeEnv: process.env.NODE_ENV,
         hasClaudeKey: !!process.env.CLAUDE_API_KEY,
+        claudeKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
         hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+        openAIKeyLength: process.env.OPENAI_API_KEY?.length || 0,
         hasGeminiKey: !!process.env.GEMINI_API_KEY,
+        geminiKeyLength: process.env.GEMINI_API_KEY?.length || 0,
         hasJwtSecret: !!process.env.JWT_SECRET,
         hasEncryptionSecret: !!process.env.API_KEY_ENCRYPTION_SECRET
       }

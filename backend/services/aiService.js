@@ -74,6 +74,11 @@ class AIService {
   getValidKey(key) {
     if (!key) return null
     
+    // Clean and trim the key to remove any whitespace, newlines, or invalid characters
+    const cleanedKey = key.toString().trim().replace(/[\r\n\t\s]/g, '')
+    
+    if (!cleanedKey) return null
+    
     // Check for common placeholder patterns
     const placeholders = [
       'your_',
@@ -86,39 +91,45 @@ class AIService {
       'api_key_here'
     ]
     
-    const keyLower = key.toLowerCase()
+    const keyLower = cleanedKey.toLowerCase()
     for (const placeholder of placeholders) {
       if (keyLower.includes(placeholder)) {
-        console.log(`Invalid API key detected (contains "${placeholder}"): ${key.substring(0, 10)}...`)
+        console.log(`Invalid API key detected (contains "${placeholder}"): ${cleanedKey.substring(0, 10)}...`)
         return null
       }
     }
     
     // OpenAI API 키: sk-로 시작하고 40자 이상
-    if (key.startsWith('sk-') && key.length > 40) {
-      console.log(`Valid OpenAI key detected: ${key.substring(0, 10)}...`)
-      return key
+    if (cleanedKey.startsWith('sk-proj-') && cleanedKey.length > 40) {
+      console.log(`Valid OpenAI key detected: ${cleanedKey.substring(0, 15)}...`)
+      return cleanedKey
     }
     
-    // Claude API 키: sk-ant-로 시작하거나 길이가 50자 이상
-    if ((key.startsWith('sk-ant-') || key.length > 50) && key.length > 30) {
-      console.log(`Valid Claude key detected: ${key.substring(0, 10)}...`)
-      return key
+    // Legacy OpenAI API 키: sk-로 시작하고 40자 이상
+    if (cleanedKey.startsWith('sk-') && !cleanedKey.startsWith('sk-ant-') && cleanedKey.length > 40) {
+      console.log(`Valid OpenAI key detected: ${cleanedKey.substring(0, 10)}...`)
+      return cleanedKey
+    }
+    
+    // Claude API 키: sk-ant-로 시작
+    if (cleanedKey.startsWith('sk-ant-') && cleanedKey.length > 50) {
+      console.log(`Valid Claude key detected: ${cleanedKey.substring(0, 15)}...`)
+      return cleanedKey
     }
     
     // Gemini API 키: 30자 이상이고 sk-로 시작하지 않음
-    if (key.length > 30 && !key.startsWith('sk-')) {
-      console.log(`Valid Gemini key detected: ${key.substring(0, 10)}...`)
-      return key
+    if (cleanedKey.length > 30 && !cleanedKey.startsWith('sk-')) {
+      console.log(`Valid Gemini key detected: ${cleanedKey.substring(0, 10)}...`)
+      return cleanedKey
     }
     
     // 길이가 20자 이상이면 일단 유효한 것으로 간주 (너무 엄격한 검증 완화)
-    if (key.length > 20) {
-      console.log(`API key accepted with relaxed validation: ${key.substring(0, 10)}... (length: ${key.length})`)
-      return key
+    if (cleanedKey.length > 20) {
+      console.log(`API key accepted with relaxed validation: ${cleanedKey.substring(0, 10)}... (length: ${cleanedKey.length})`)
+      return cleanedKey
     }
     
-    console.log(`API key validation failed for key: ${key.substring(0, 10)}... (length: ${key.length})`)
+    console.log(`API key validation failed for key: ${cleanedKey.substring(0, 10)}... (length: ${cleanedKey.length})`)
     return null
   }
 
