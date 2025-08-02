@@ -8,7 +8,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 const API_URL = import.meta.env?.VITE_API_URL || 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3001'
-    : 'https://edutext-pro-backend.onrender.com')
+    : 'https://wonbyte-pro.onrender.com')
 
 // Supabase Configuration
 const SUPABASE_URL = 'https://xrjrddwrsasjifhghzfl.supabase.co'
