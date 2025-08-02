@@ -1,6 +1,91 @@
 import React, { useState, useCallback } from 'react'
-import { Plus, BookOpen, Check, X, Edit3, Save, RotateCcw, Sparkles } from 'lucide-react'
+import { Plus, BookOpen, Check, X, Edit3, Save, RotateCcw, Sparkles, Star } from 'lucide-react'
 import aiService from '../../services/aiService'
+
+/**
+ * 별표 난이도 표시 컴포넌트
+ */
+function StarRating({ difficulty }) {
+  // "★★★☆☆" 형태의 문자열을 숫자로 변환
+  const getStarCount = (difficultyStr) => {
+    if (typeof difficultyStr === 'number') return difficultyStr
+    if (typeof difficultyStr !== 'string') return 3
+    const filledStars = (difficultyStr.match(/★/g) || []).length
+    return Math.min(Math.max(filledStars, 1), 5)
+  }
+
+  const starCount = getStarCount(difficulty)
+
+  return (
+    <div className="flex items-center space-x-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`w-4 h-4 ${
+            star <= starCount
+              ? 'text-yellow-400 fill-yellow-400'
+              : 'text-gray-300'
+          }`}
+        />
+      ))}
+      <span className="ml-1 text-xs text-gray-600">({starCount}/5)</span>
+    </div>
+  )
+}
+
+/**
+ * 한자어 표시 컴포넌트 (훈과 음 포함)
+ */
+function HanjaDisplay({ etymology }) {
+  if (!etymology) return null
+
+  // "觀(볼 관) + 察(살필 찰)" 형태를 파싱하여 개별 한자 표시
+  const parseHanja = (etymologyStr) => {
+    // 한자(훈 음) 패턴 매칭
+    const hanjaPattern = /([一-龯])\(([^)]+)\)/g
+    const matches = []
+    let match
+    
+    while ((match = hanjaPattern.exec(etymologyStr)) !== null) {
+      const [, hanja, reading] = match
+      const parts = reading.split(' ')
+      matches.push({
+        hanja,
+        hun: parts[0] || '', // 훈
+        eum: parts[1] || ''  // 음
+      })
+    }
+    
+    return matches
+  }
+
+  const hanjaList = parseHanja(etymology)
+  
+  if (hanjaList.length === 0) {
+    // 파싱에 실패한 경우 원본 텍스트 표시
+    return (
+      <span className="text-blue-700 font-medium bg-blue-50 px-2 py-1 rounded text-sm">
+        {etymology}
+      </span>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {hanjaList.map((item, index) => (
+        <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-800 mb-1">{item.hanja}</div>
+            <div className="text-xs text-gray-600">
+              <div className="font-medium">{item.hun}</div>
+              <div className="text-blue-600">{item.eum}</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 /**
  * 어휘 추출 및 관리 컴포넌트
@@ -8,6 +93,8 @@ import aiService from '../../services/aiService'
  * - 사용자 추가 어휘 기능
  * - 어휘별 상세 정보 (한자어 풀이, 예문, 유의어/반의어)
  * - 체크리스트 기능으로 학습할 어휘 선택
+ * - 별표 난이도 표시
+ * - 한자어 훈과 음 표기
  */
 export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChange }) {
   const [vocabularyList, setVocabularyList] = useState([])
@@ -260,7 +347,7 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
           </button>
         </div>
         <p className="mt-2 text-sm text-gray-600">
-          어휘를 추가하면 AI가 자동으로 의미, 예문, 유의어/반의어를 생성합니다.
+          어휘를 추가하면 AI가 자동으로 의미, 자연스러운 예문, 유의어/반의어를 생성합니다.
         </p>
       </div>
 
@@ -308,7 +395,7 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
                     )}
                     
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-sm text-yellow-600">{word.difficulty}</span>
+                      <StarRating difficulty={word.difficulty} />
                       {word.isCustom && (
                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
                           사용자 추가
@@ -384,7 +471,7 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
                 {/* 한자어 어원 */}
                 {word.etymology && (
                   <div>
-                    <span className="text-sm font-medium text-gray-700">한자어 풀이: </span>
+                    <span className="text-sm font-medium text-gray-700 mb-2 block">한자어 풀이: </span>
                     {editingId === word.id ? (
                       <input
                         type="text"
@@ -393,7 +480,7 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
                         className="w-full mt-1 border border-gray-300 rounded px-2 py-1"
                       />
                     ) : (
-                      <span className="text-blue-700 font-medium">{word.etymology}</span>
+                      <HanjaDisplay etymology={word.etymology} />
                     )}
                   </div>
                 )}

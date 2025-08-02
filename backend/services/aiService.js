@@ -702,6 +702,66 @@ ${this.getJsonFormat(contentType)}
     // })
   }
 
+  // 문해력 문제 생성
+  async generateReadingProblems(text, problemType = 'mixed', count = 5) {
+    try {
+      const contentType = 'reading_problems'
+      const prompt = `다음 지문을 바탕으로 문해력 훈련 문제 ${count}개를 생성해주세요:\n\n"${text}"`
+      
+      const result = await this.generateContent({
+        contentType,
+        prompt,
+        targetAge: 'elem4', // 기본값
+        difficulty: 'intermediate'
+      })
+      
+      return result
+    } catch (error) {
+      console.error('문제 생성 오류:', error)
+      throw new Error(`문제 생성에 실패했습니다: ${error.message}`)
+    }
+  }
+
+  // 어휘 추출
+  async extractVocabulary(text, gradeLevel = 'elem4', count = 5) {
+    try {
+      const contentType = 'vocabulary_extraction'
+      const prompt = `다음 지문에서 핵심 어휘 ${count}개를 추출해주세요:\n\n"${text}"`
+      
+      const result = await this.generateContent({
+        contentType,
+        prompt,
+        targetAge: gradeLevel,
+        difficulty: 'intermediate'
+      })
+      
+      return result
+    } catch (error) {
+      console.error('어휘 추출 오류:', error)
+      throw new Error(`어휘 추출에 실패했습니다: ${error.message}`)
+    }
+  }
+
+  // 문해력 난이도 분석
+  async analyzeReadingLevel(text, gradeLevel = 'elem4') {
+    try {
+      const contentType = 'analysis'
+      const prompt = text
+      
+      const result = await this.generateContent({
+        contentType,
+        prompt,
+        targetAge: gradeLevel,
+        difficulty: 'intermediate'
+      })
+      
+      return result
+    } catch (error) {
+      console.error('난이도 분석 오류:', error)
+      throw new Error(`난이도 분석에 실패했습니다: ${error.message}`)
+    }
+  }
+
   // AI 제공업체 상태 확인
   async checkProviderStatus() {
     const status = {

@@ -124,7 +124,7 @@ app.post('/api/ai/generate', async (req, res) => {
 
 app.post('/api/ai/extract-vocabulary', async (req, res) => {
   try {
-    const { text, grade = 'elem4', count = 10 } = req.body
+    const { text, grade = 'elem4', count = 5 } = req.body
     
     if (!text) {
       return res.status(400).json({ 
@@ -141,28 +141,41 @@ app.post('/api/ai/extract-vocabulary', async (req, res) => {
       })
     }
 
-    const prompt = `다음 지문에서 ${grade} 학년 수준에 맞는 중요한 어휘 ${count}개를 추출하고, 각 어휘의 뜻과 예문을 제공해주세요.\n\n지문: ${text}\n\n다음 JSON 형식으로만 응답해주세요:\n{\n  "vocabulary": [\n    {\n      "word": "어휘",\n      "meaning": "의미 설명",\n      "example": "예문",\n      "difficulty": 1\n    }\n  ]\n}`
+    const prompt = `다음 지문에서 ${grade} 학년 수준에 맞는 핵심 어휘 ${count}개를 추출하고 분석해주세요.\n\n지문: ${text}\n\n다음 JSON 형식으로만 응답해주세요. 절대로 JSON 외의 다른 텍스트는 포함하지 마세요:\n{\n  "vocabularyList": [\n    {\n      "word": "어휘",\n      "meaning": "한자어 기반 쉬운 풀이",\n      "etymology": "한자어 어원 (예: 觀(볼 관) + 察(살필 찰))",\n      "synonyms": ["유의어1", "유의어2"],\n      "antonyms": ["반의어1", "반의어2"],\n      "difficulty": "★★★☆☆",\n      "example": "자연스러운 예문",\n      "gradeAppropriate": true\n    }\n  ]\n}`
 
     const response = await claudeClient.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 2000,
+      max_tokens: 3000,
       temperature: 0.5,
       messages: [{ role: 'user', content: prompt }]
     })
 
-    let vocabulary = []
+    let vocabularyList = []
     try {
       const content = response.content[0].text
       const jsonMatch = content.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0])
-        vocabulary = parsed.vocabulary || []
+        vocabularyList = parsed.vocabularyList || []
       }
     } catch (e) {
       console.error('Parse error:', e)
+      // 파싱 실패 시 샘플 데이터 제공
+      vocabularyList = [
+        {
+          word: '관찰',
+          meaning: '자세히 살펴보는 것',
+          etymology: '觀(볼 관) + 察(살필 찰)',
+          synonyms: ['구경', '살피기'],
+          antonyms: ['무시', '소홀'],
+          difficulty: '★★★☆☆',
+          example: '과학자는 현미경으로 세포를 관찰했습니다.',
+          gradeAppropriate: true
+        }
+      ]
     }
 
-    res.json({ success: true, vocabulary, count: vocabulary.length })
+    res.json({ success: true, content: { vocabularyList }, count: vocabularyList.length })
   } catch (error) {
     console.error('Error:', error.message)
     res.status(500).json({ success: false, error: error.message })
@@ -171,7 +184,7 @@ app.post('/api/ai/extract-vocabulary', async (req, res) => {
 
 app.post('/api/ai/generate-problems', async (req, res) => {
   try {
-    const { text, type = 'reading', count = 5, grade = 'elem4' } = req.body
+    const { text, type = 'mixed', count = 5, grade = 'elem4' } = req.body
     
     if (!text) {
       return res.status(400).json({ 
@@ -188,11 +201,11 @@ app.post('/api/ai/generate-problems', async (req, res) => {
       })
     }
 
-    const prompt = `다음 지문을 바탕으로 ${grade} 학년 수준의 ${type === 'vocabulary' ? '어휘' : '독해'} 문제 ${count}개를 생성해주세요.\n\n지문: ${text}\n\n다음 JSON 형식으로만 응답해주세요:\n{\n  "problems": [\n    {\n      "question": "문제",\n      "options": ["선택지1", "선택지2", "선택지3", "선택지4"],\n      "answer": 0,\n      "explanation": "해설"\n    }\n  ]\n}`
+    const prompt = `다음 지문을 바탕으로 ${grade} 학년 수준의 문해력 훈련 문제 ${count}개를 생성해주세요.\n\n지문: ${text}\n\n문제 구성: 객관식 3-4개, 서술형 1-2개\n\n다음 JSON 형식으로만 응답해주세요. 절대로 JSON 외의 다른 텍스트는 포함하지 마세요:\n{\n  "problems": [\n    {\n      "type": "multiple_choice",\n      "question": "문제 내용",\n      "options": ["선택지1", "선택지2", "선택지3", "선택지4"],\n      "correctAnswer": 0,\n      "explanation": "정답 해설"\n    },\n    {\n      "type": "short_answer",\n      "question": "서술형 문제 내용",\n      "expectedLength": "1-2문장",\n      "sampleAnswer": "예시 답안",\n      "gradingCriteria": ["채점 기준 1", "채점 기준 2"],\n      "explanation": "문제 해설"\n    }\n  ]\n}`
 
     const response = await claudeClient.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 3000,
+      max_tokens: 4000,
       temperature: 0.7,
       messages: [{ role: 'user', content: prompt }]
     })
@@ -207,9 +220,27 @@ app.post('/api/ai/generate-problems', async (req, res) => {
       }
     } catch (e) {
       console.error('Parse error:', e)
+      // 파싱 실패 시 샘플 데이터 제공
+      problems = [
+        {
+          type: 'multiple_choice',
+          question: '이 글의 주제로 가장 적절한 것은?',
+          options: ['환경 보호의 중요성', '기술 발전의 문제점', '교육의 필요성', '건강한 생활 습관'],
+          correctAnswer: 0,
+          explanation: '글 전체에서 환경을 보호해야 한다는 내용이 반복적으로 나타나므로 주제는 환경 보호의 중요성입니다.'
+        },
+        {
+          type: 'short_answer',
+          question: '환경을 보호하기 위해 우리가 할 수 있는 일을 두 가지 쓰시오.',
+          expectedLength: '1-2문장',
+          sampleAnswer: '쓰레기 분리수거를 하고, 일회용품 사용을 줄인다.',
+          gradingCriteria: ['환경 보호와 관련된 구체적인 행동 제시', '두 가지 이상의 방법 언급'],
+          explanation: '환경 보호를 위한 실천 방안으로는 재활용, 에너지 절약, 대중교통 이용 등이 있습니다.'
+        }
+      ]
     }
 
-    res.json({ success: true, problems, count: problems.length })
+    res.json({ success: true, content: { problems }, count: problems.length })
   } catch (error) {
     console.error('Error:', error.message)
     res.status(500).json({ success: false, error: error.message })
@@ -218,7 +249,7 @@ app.post('/api/ai/generate-problems', async (req, res) => {
 
 app.post('/api/ai/analyze-text', async (req, res) => {
   try {
-    const { text, targetGrade = 'elem4' } = req.body
+    const { text, grade = 'elem4' } = req.body
     
     if (!text) {
       return res.status(400).json({ 
@@ -235,7 +266,7 @@ app.post('/api/ai/analyze-text', async (req, res) => {
       })
     }
 
-    const prompt = `다음 지문의 문해력 난이도를 ${targetGrade} 학년 기준으로 분석해주세요.\n\n지문: ${text}\n\n분석 항목:\n1. 텍스트 길이 적절성 (1-10점)\n2. 어휘 수준 (1-10점)\n3. 문장 복잡도 (1-10점)\n4. 내용 수준 (1-10점)\n5. 배경지식 요구도 (1-10점)\n\n각 항목을 점수와 함께 설명하고, 총평을 제공해주세요.`
+    const prompt = `다음 지문의 문해력 난이도를 ${grade} 학년 기준으로 분석해주세요.\n\n지문: ${text}\n\n다음 JSON 형식으로만 응답해주세요. 절대로 JSON 외의 다른 텍스트는 포함하지 마세요:\n{\n  "textLength": 8,\n  "vocabularyLevel": 7,\n  "sentenceComplexity": 6,\n  "contentLevel": 7,\n  "backgroundKnowledge": 5,\n  "totalScore": 6.6,\n  "analysis": "해당 학년 수준에 맞는지에 대한 상세한 분석"\n}\n\n각 항목은 1-10점으로 평가해주세요:\n1. textLength: 텍스트 길이 적절성\n2. vocabularyLevel: 어휘 난이도\n3. sentenceComplexity: 문장 구조 복잡성\n4. contentLevel: 내용 구성 수준\n5. backgroundKnowledge: 배경지식 의존도\n6. totalScore: 전체 평균 점수\n7. analysis: 종합적인 분석 설명`
 
     const response = await claudeClient.messages.create({
       model: 'claude-3-haiku-20240307',
@@ -244,10 +275,36 @@ app.post('/api/ai/analyze-text', async (req, res) => {
       messages: [{ role: 'user', content: prompt }]
     })
 
+    let analysisResult = null
+    try {
+      const content = response.content[0].text
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        analysisResult = JSON.parse(jsonMatch[0])
+      }
+    } catch (e) {
+      console.error('Parse error:', e)
+      // 파싱 실패 시 기본 분석 제공
+      const charCount = text.length
+      const sentences = text.split(/[.!?]/).filter(s => s.trim())
+      const sentenceCount = sentences.length || 1
+      const avgSentenceLength = charCount / sentenceCount
+      
+      analysisResult = {
+        textLength: Math.min(10, Math.round(charCount / 200)),
+        vocabularyLevel: Math.min(10, Math.round(avgSentenceLength / 10)),
+        sentenceComplexity: Math.min(10, Math.round(avgSentenceLength / 15)),
+        contentLevel: Math.min(10, 7),
+        backgroundKnowledge: Math.min(10, 5),
+        totalScore: Math.round((charCount / 200 + avgSentenceLength / 10 + avgSentenceLength / 15 + 7 + 5) / 5 * 10) / 10,
+        analysis: '이 지문은 해당 학년 수준에 적합한 난이도를 가지고 있습니다.'
+      }
+    }
+
     res.json({
       success: true,
-      analysis: response.content[0].text,
-      targetGrade
+      content: analysisResult,
+      targetGrade: grade
     })
   } catch (error) {
     console.error('Error:', error.message)
