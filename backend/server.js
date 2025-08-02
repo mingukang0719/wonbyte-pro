@@ -9,6 +9,7 @@ import templateRoutes from './routes/templates.js'
 // import aiGenerationRoutes from './routes/aiGeneration.js'
 import aiGenerationRoutes from './routes/aiGenerationSimple.js'
 import pdfGenerationRoutes from './routes/pdfGeneration.js'
+import testRoute from './testRoute.js'
 import { adminAuthMiddleware } from './middleware/adminAuth.js'
 
 // Load environment variables
@@ -335,6 +336,9 @@ app.get('/api/pdf/download/:fileName', async (req, res) => {
 })
 
 // Legacy generate endpoint removed - use /api/ai/generate instead
+
+// Test routes - mount first for debugging
+app.use('/api/test', testRoute)
 
 // Template management routes
 app.use('/api/admin/templates', templateRoutes)
