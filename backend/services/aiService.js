@@ -327,6 +327,10 @@ class AIService {
 
   async generateWithClaude(prompt) {
     try {
+      // Temporary: Always use mock response for Claude until API key issue is resolved
+      console.log('Claude: Using mock response due to API key formatting issues')
+      return this.getMockResponse('claude', prompt)
+
       // Claude 클라이언트가 초기화되지 않은 경우만 모의 응답 제공
       if (!this.claude) {
         console.log('Claude: Client not initialized, using mock response')
