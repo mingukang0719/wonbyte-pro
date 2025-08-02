@@ -67,6 +67,12 @@ class AIService {
 
       // Anthropic Claude 설정
       if (finalClaudeKey) {
+        console.log('Claude key setup:', {
+          keyLength: finalClaudeKey.length,
+          keyStart: finalClaudeKey.substring(0, 15),
+          keyEnd: finalClaudeKey.substring(finalClaudeKey.length - 10)
+        })
+        
         this.claude = new Anthropic({
           apiKey: finalClaudeKey
         })
@@ -83,15 +89,12 @@ class AIService {
   getValidKey(key) {
     if (!key) return null
     
-    // Clean and trim the key to remove any whitespace, newlines, or invalid characters
-    // This handles all forms of whitespace including non-breaking spaces and other Unicode whitespace
+    // Clean and trim the key to remove any whitespace, newlines, or control characters
+    // Be conservative - only remove clearly problematic characters
     let cleanedKey = key.toString()
       .trim()
-      .replace(/[\r\n\t\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, '')
-      .replace(/[^\x20-\x7E]/g, '') // Remove non-printable ASCII characters
-    
-    // Additional cleaning for any remaining problematic characters
-    cleanedKey = cleanedKey.replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+      .replace(/[\r\n\t\f\v]/g, '') // Remove line breaks and tabs
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters but keep printable
     
     console.log('Key cleaning debug:', {
       originalLength: key.length,
