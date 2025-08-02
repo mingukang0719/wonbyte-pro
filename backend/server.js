@@ -26,32 +26,19 @@ const supabaseService = new SupabaseService()
 
 // CORS configuration - MUST come before other middleware
 const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://wonbyte-pro-app.vercel.app',
-      'https://wonbyte-pro.vercel.app',
-      'https://onbyte-print.netlify.app', 
-      'https://edutext-pro.netlify.app', 
-      'https://onbyte-print-frontend.onrender.com',
-      'https://mingukang0719.github.io'
-    ]
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || process.env.NODE_ENV !== 'production') {
-      return callback(null, true)
-    }
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      console.log('CORS blocked origin:', origin)
-      callback(new Error('Not allowed by CORS'))
-    }
-  },
+  origin: [
+    'https://wonbyte-pro-app.vercel.app',
+    'https://wonbyte-pro.vercel.app',
+    'https://onbyte-print.netlify.app', 
+    'https://edutext-pro.netlify.app', 
+    'https://onbyte-print-frontend.onrender.com',
+    'https://mingukang0719.github.io'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'X-Request-Id']
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
 app.use(cors(corsOptions))
@@ -79,14 +66,7 @@ app.use('/api/', limiter)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Handle preflight requests for all routes
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin)
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  res.header('Access-Control-Allow-Credentials', 'true')
-  res.sendStatus(200)
-})
+// Let cors middleware handle preflight requests automatically
 
 // Health check endpoint with Supabase status
 app.get('/api/health', async (req, res) => {
