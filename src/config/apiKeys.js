@@ -17,13 +17,17 @@ export const apiKeys = {
 
 // Check if at least one API key is configured
 export const hasApiKeys = () => {
-  return apiKeys.openai || apiKeys.anthropic
+  // Always return true since we're using backend API
+  return true
 }
 
 // Get available AI providers based on API keys
 export const getAvailableProviders = () => {
-  const providers = []
-  if (apiKeys.openai) providers.push({ id: 'openai', name: 'OpenAI GPT' })
-  if (apiKeys.anthropic) providers.push({ id: 'anthropic', name: 'Anthropic Claude' })
-  return providers
+  // Since we're using backend API, all providers are available
+  // The backend will handle the actual API keys
+  return [
+    { id: 'openai', name: 'OpenAI GPT' },
+    { id: 'anthropic', name: 'Anthropic Claude' },
+    { id: 'gemini', name: 'Google Gemini' }
+  ]
 }
