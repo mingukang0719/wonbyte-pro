@@ -21,7 +21,7 @@ export const config = {
   
   // API Settings
   apiUrl: API_URL,
-  demo: false,
+  demo: true,
   
   // Supabase Settings
   supabase: {
