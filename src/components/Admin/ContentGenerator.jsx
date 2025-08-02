@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiEndpoints, apiFetch } from '../../config/api'
+import { config, apiFetch } from '../../config'
 
 const ContentGenerator = () => {
   const [templates, setTemplates] = useState([])
@@ -17,7 +17,7 @@ const ContentGenerator = () => {
 
   const fetchTemplates = async () => {
     try {
-      const response = await apiFetch(apiEndpoints.adminTemplates)
+      const response = await apiFetch(config.endpoints.adminTemplates)
       const data = await response.json()
       if (data.success) {
         setTemplates(data.templates)
@@ -49,7 +49,7 @@ const ContentGenerator = () => {
 
     setIsGenerating(true)
     try {
-      const response = await apiFetch(apiEndpoints.generateFromTemplate, {
+      const response = await apiFetch(config.endpoints.generateFromTemplate, {
         method: 'POST',
         body: JSON.stringify({
           templateId: selectedTemplate.id,

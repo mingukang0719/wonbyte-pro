@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lock, User } from 'lucide-react'
-import { apiEndpoints } from '../config/api'
+import { config } from '../config'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -16,7 +16,7 @@ export default function AdminLogin() {
     setError('')
 
     try {
-      const response = await fetch(apiEndpoints.adminLogin, {
+      const response = await fetch(config.endpoints.adminLogin, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
