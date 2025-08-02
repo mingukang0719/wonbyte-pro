@@ -1,0 +1,14 @@
+<!doctype html><html lang="ko"><head><meta charset="UTF-8"/><link rel="icon" type="image/svg+xml" href="/wonbyte-pro/vite.svg"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Wonbyte Pro - AI 한국어 문해력 훈련</title><script>
+      (function(l) {
+        var segmentCount = 1;
+        var repo = '/wonbyte-pro';
+        
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          repo + '/?p=/' +
+          l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+          (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      }(window.location))
+    </script></head><body></body></html>

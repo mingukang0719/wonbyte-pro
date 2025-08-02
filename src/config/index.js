@@ -13,7 +13,7 @@ const SUPABASE_URL = 'https://jqlouemxgafrbzdxyojl.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxbG91ZW14Z2FmcmJ6ZHh5b2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMDE5ODgsImV4cCI6MjA2OTY3Nzk4OH0.lzd76e3ZeH5eq33G6V6FMbs5lDToV9tGDUIilAVDPYI'
 
 // GitHub Pages Configuration
-const GITHUB_PAGES_BASENAME = '/'
+const GITHUB_PAGES_BASENAME = process.env.NODE_ENV === 'production' ? '/wonbyte-pro' : '/'
 
 export const config = {
   // Environment

@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.1",
   "description": "Wonbyte Pro - AI 기반 한국어 문해력 훈련 서비스",
+  "homepage": "https://mingukang0719.github.io/wonbyte-pro",
   "scripts": {
     "dev": "webpack serve --config webpack.config.js --mode development",
     "build": "webpack --config webpack.config.js --mode production",
