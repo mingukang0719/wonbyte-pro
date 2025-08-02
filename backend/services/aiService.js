@@ -339,7 +339,8 @@ class AIService {
 문법 규칙의 명확한 설명, 다양한 예문, 주의사항을 포함해야 합니다.`,
 
       reading: `한국어 읽기 지문을 생성해주세요.
-해당 연령과 수준에 맞는 지문을 정확한 글자 수로 작성해야 합니다.`,
+사용자가 요청한 주제에 대해 해당 연령과 수준에 맞는 지문을 정확한 글자 수로 작성해야 합니다.
+지문은 교육적 가치가 있고 학생들이 흥미를 느낄 수 있는 내용이어야 합니다.`,
 
       questions: `지문 기반 서술형 문제를 생성해주세요.
 맥락 추론형과 내용 이해형 문제를 포함해야 합니다.`,
@@ -392,6 +393,21 @@ ${this.getJsonFormat(contentType)}
 
   getJsonFormat(contentType) {
     switch (contentType) {
+      case 'reading':
+        return `{
+  "title": "읽기 지문 제목",
+  "description": "지문에 대한 간단한 설명",
+  "mainContent": {
+    "introduction": "사용자가 요청한 주제에 대해 정확히 요청된 글자 수로 작성된 읽기 지문 내용. 해당 학년 수준에 맞는 어휘와 문체로 작성되어야 함."
+  },
+  "metadata": {
+    "characterCount": "실제 글자 수",
+    "gradeLevel": "대상 학년",
+    "topic": "실제 주제",
+    "difficulty": "난이도"
+  }
+}`
+
       case 'vocabulary':
         return `{
   "title": "어휘 분석 결과",
