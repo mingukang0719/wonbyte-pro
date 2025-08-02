@@ -1,8 +1,8 @@
 {
-  "name": "edutext-pro",
+  "name": "wonbyte-pro",
   "private": true,
-  "version": "1.0.0",
-  "description": "EduText Pro - AI 교육 텍스트 생성 서비스",
+  "version": "1.0.1",
+  "description": "Wonbyte Pro - AI 기반 한국어 문해력 훈련 서비스",
   "scripts": {
     "dev": "webpack serve --config webpack.config.js --mode development",
     "build": "webpack --config webpack.config.js --mode production",
