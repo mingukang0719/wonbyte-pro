@@ -5,32 +5,6 @@ import { isAllowedEnvironment, apiRateLimiter, sanitizeApiResponse, logApiUsage 
 class ClientAIService {
   constructor() {
     this.providers = {
-      gemini: {
-        url: 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent',
-        headers: (apiKey) => ({
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        }),
-        formatRequest: (prompt) => ({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        }),
-        parseResponse: (data) => {
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-          return {
-            success: true,
-            content: text,
-            metadata: {
-              provider: 'gemini',
-              model: 'gemini-pro',
-              tokensUsed: data.usageMetadata?.totalTokenCount || 0
-            }
-          }
-        }
-      },
       openai: {
         url: 'https://api.openai.com/v1/chat/completions',
         headers: (apiKey) => ({
@@ -98,7 +72,7 @@ class ClientAIService {
         throw new Error(`API 호출 제한을 초과했습니다. ${remainingTime}초 후에 다시 시도해주세요.`)
       }
 
-      const { provider = 'gemini', prompt } = request
+      const { provider = 'openai', prompt } = request
       const apiKey = apiKeys[provider]
       
       if (!apiKey) {
@@ -136,13 +110,13 @@ class ClientAIService {
 
     } catch (error) {
       console.error('Client AI Service Error:', error)
-      logApiUsage(request.provider || 'gemini', false, error)
+      logApiUsage(request.provider || 'openai', false, error)
       throw error
     }
   }
 
   // 한국어 읽기 지문 생성을 위한 특화 메서드
-  async generateReadingText(topic, grade, length, provider = 'gemini') {
+  async generateReadingText(topic, grade, length, provider = 'openai') {
     const prompt = `다음 조건에 맞는 한국어 읽기 지문을 작성해주세요:
     
 주제: ${topic}
@@ -180,7 +154,7 @@ class ClientAIService {
   }
 
   // 문해력 분석
-  async analyzeReadingLevel(text, gradeLevel, provider = 'gemini') {
+  async analyzeReadingLevel(text, gradeLevel, provider = 'openai') {
     const prompt = `다음 텍스트의 문해력 난이도를 분석해주세요:
 
 텍스트: """
@@ -236,7 +210,7 @@ ${text}
   }
 
   // 어휘 추출
-  async extractVocabulary(text, gradeLevel, count = 10, provider = 'gemini') {
+  async extractVocabulary(text, gradeLevel, count = 10, provider = 'openai') {
     const prompt = `다음 텍스트에서 ${gradeLevel} 학생이 학습해야 할 핵심 어휘 ${count}개를 추출해주세요:
 
 텍스트: """
@@ -275,7 +249,7 @@ JSON 배열 형식으로 응답해주세요.`
   }
 
   // 문제 생성
-  async generateProblems(text, problemType, count, provider = 'gemini') {
+  async generateProblems(text, problemType, count, provider = 'openai') {
     const typeMap = {
       vocabulary: '어휘',
       comprehension: '독해',
