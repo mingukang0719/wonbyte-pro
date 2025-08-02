@@ -10,6 +10,7 @@ import {
   Globe
 } from 'lucide-react'
 import aiService from '../services/aiService'
+import { config } from '../config'
 import { TOPIC_CATEGORIES, GRADE_OPTIONS, LENGTH_OPTIONS } from '../utils/constants'
 import { validateFile } from '../utils/validation'
 import { useApiCall, useParallelApiCalls } from '../hooks/useApiCall'
@@ -245,21 +246,46 @@ export default function ReadingTrainerPage() {
       const textToExport = mode === 'generate' ? generatedText : userText
       const gradeLabel = GRADE_OPTIONS.find(g => g.value === selectedGrade)?.label || selectedGrade
       
-      await generatePDF({
-        title: '원바이트 PRO 문해력 훈련',
-        grade: gradeLabel,
-        text: textToExport,
-        analysisResult,
-        selectedVocabulary: selectedVocabulary.filter(word => word.isChecked),
-        generatedProblems,
-        vocabularyProblems,
-        readingProblems
+      // 백엔드 PDF 생성 API 호출
+      const response = await fetch(`${config.apiUrl}/api/pdf/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: '원바이트 PRO 문해력 훈련',
+          grade: gradeLabel,
+          text: textToExport,
+          analysisResult,
+          selectedVocabulary: selectedVocabulary.filter(word => word.isChecked || word.selected),
+          generatedProblems,
+          vocabularyProblems,
+          readingProblems
+        })
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
       
-      alert('📥 PDF 다운로드가 시작되었습니다.\n\n현재는 JSON 형식으로 다운로드됩니다.\nPDF 기능은 계속 업데이트 예정입니다.')
+      if (result.success) {
+        // HTML 콘텐츠를 새 창에서 열어서 PDF로 저장할 수 있게 함
+        const printWindow = window.open('', '_blank', 'width=900,height=1200,scrollbars=yes')
+        printWindow.document.write(result.htmlContent)
+        printWindow.document.close()
+        
+        // 인쇄 대화상자가 나타날 수 있도록 잠시 기다림
+        setTimeout(() => {
+          printWindow.focus()
+        }, 500)
+      } else {
+        throw new Error(result.error || 'PDF 생성에 실패했습니다')
+      }
     } catch (error) {
       console.error('PDF 생성 오류:', error)
-      setErrorMessage('PDF 생성 중 오류가 발생했습니다')
+      setErrorMessage(`PDF 생성 중 오류가 발생했습니다: ${error.message}`)
     }
   }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, generatedProblems, vocabularyProblems, readingProblems])
   

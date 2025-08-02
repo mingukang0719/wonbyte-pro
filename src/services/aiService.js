@@ -74,18 +74,33 @@ class AIService {
         return await this.clientAIService.analyzeReadingLevel(text, gradeLevel)
       }
 
-      const request = {
-        contentType: 'analysis',
-        targetAge: gradeLevel,
-        prompt: `다음 지문의 문해력 난이도를 분석해주세요: ${text}`
-      }
-
       if (this.isDemo) {
         // 데모 모드에서는 간단한 분석 로직 사용
         return this.mockAnalyzeReadingLevel(text)
       }
 
-      return await this.generateContent(request)
+      const response = await fetch(`${this.baseURL}/api/ai/analyze-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          grade: gradeLevel
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || '텍스트 분석에 실패했습니다.')
+      }
+
+      return data
     } catch (error) {
       console.error('Reading Level Analysis Error:', error)
       throw error
@@ -99,17 +114,33 @@ class AIService {
         return await this.clientAIService.extractVocabulary(text, gradeLevel, count)
       }
 
-      const request = {
-        contentType: 'vocabulary_extraction',
-        targetAge: gradeLevel,
-        prompt: `다음 지문에서 ${gradeLevel} 수준의 핵심 어휘 ${count}개를 추출하고 의미를 설명해주세요: ${text}`
-      }
-
       if (this.isDemo) {
         return this.mockExtractVocabulary(text, count)
       }
 
-      return await this.generateContent(request)
+      const response = await fetch(`${this.baseURL}/api/ai/extract-vocabulary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          grade: gradeLevel,
+          count
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || '어휘 추출에 실패했습니다.')
+      }
+
+      return data
     } catch (error) {
       console.error('Vocabulary Extraction Error:', error)
       throw error
@@ -117,23 +148,40 @@ class AIService {
   }
 
   // 문해력 훈련 문제 생성
-  async generateReadingProblems(text, problemType, count) {
+  async generateReadingProblems(text, problemType, count, gradeLevel = 'elem4') {
     try {
       if (this.useClientAI) {
         return await this.clientAIService.generateProblems(text, problemType, count)
-      }
-
-      const request = {
-        contentType: 'reading_problems',
-        targetAge: 'elem4', // Default grade level
-        prompt: `다음 지문을 바탕으로 ${problemType} 문제를 ${count}개 생성해주세요: ${text}`
       }
 
       if (this.isDemo) {
         return this.mockGenerateProblems(text, problemType, count)
       }
 
-      return await this.generateContent(request)
+      const response = await fetch(`${this.baseURL}/api/ai/generate-problems`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          grade: gradeLevel,
+          problemTypes: Array.isArray(problemType) ? problemType : [problemType],
+          count
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || '문제 생성에 실패했습니다.')
+      }
+
+      return data
     } catch (error) {
       console.error('Problem Generation Error:', error)
       throw error

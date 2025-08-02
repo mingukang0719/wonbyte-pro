@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js'
 import SupabaseService from './services/supabaseService.js'
 import templateRoutes from './routes/templates.js'
 import aiGenerationRoutes from './routes/aiGeneration.js'
+import pdfGenerationRoutes from './routes/pdfGeneration.js'
 import { adminAuthMiddleware } from './middleware/adminAuth.js'
 
 // Load environment variables
@@ -356,6 +357,9 @@ app.use('/api/admin/templates', templateRoutes)
 
 // AI generation routes
 app.use('/api/ai', aiGenerationRoutes)
+
+// PDF generation routes
+app.use('/api/pdf', pdfGenerationRoutes)
 
 // Admin login endpoint with Supabase integration
 app.post('/api/admin/login', async (req, res) => {
