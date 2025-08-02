@@ -1,4 +1,4 @@
-// Frontend AI Service
+// Frontend AI Service - CACHE BUST 2025-08-02-15:05
 import { config } from '../config'
 import DemoService from './demoService'
 import ClientAIService from './clientAIService'
@@ -6,12 +6,14 @@ import { hasApiKeys } from '../config/apiKeys'
 
 class AIService {
   constructor() {
-    this.baseURL = config.apiUrl
+    // FORCE CORRECT URL - CACHE BUSTING
+    this.baseURL = 'https://wonbyte-pro.onrender.com'
     this.demoService = new DemoService()
     this.clientAIService = ClientAIService
-    this.isDemo = config.demo || config.apiUrl === 'demo'
+    this.isDemo = false // Force disable demo mode
     // 항상 백엔드 API 사용하도록 변경 (클라이언트 직접 호출 비활성화)
     this.useClientAI = false
+    console.log('AIService Constructor - FORCED baseURL:', this.baseURL)
   }
 
   async generateContent(request) {
