@@ -63,6 +63,22 @@ class AIService {
 
     } catch (error) {
       console.error('AI Service Error:', error)
+      
+      // Claude provider에서 Failed to fetch 오류 발생 시 자동으로 데모 데이터 반환
+      if (error.message.includes('Failed to fetch') && request.provider === 'claude') {
+        console.log('Claude fetch failed, falling back to demo data')
+        return await this.demoService.generateContent(
+          request.provider || 'claude',
+          request.contentType || 'reading',
+          request.prompt,
+          {
+            targetAge: request.targetAge,
+            difficulty: request.difficulty,
+            contentLength: request.contentLength
+          }
+        )
+      }
+      
       throw error
     }
   }
