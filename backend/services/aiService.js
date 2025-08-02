@@ -1,6 +1,7 @@
 // AI 서비스 - OpenAI, Gemini, Claude 선택형
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import Anthropic from '@anthropic-ai/sdk'
+import APIKeyService from './apiKeyService.js'
 import dotenv from 'dotenv'
 
 // 환경변수 로드
@@ -8,19 +9,82 @@ dotenv.config()
 
 class AIService {
   constructor() {
-    console.log('AIService constructor - Environment check:', {
-      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-      hasClaudeKey: !!process.env.CLAUDE_API_KEY,
-      claudeKeyPrefix: process.env.CLAUDE_API_KEY?.substring(0, 10),
-      hasGeminiKey: !!process.env.GEMINI_API_KEY
-    })
-    
-    // OpenAI API 키 설정
-    this.openaiKey = process.env.OPENAI_API_KEY
-    
-    // Google Gemini 설정
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
-      this.gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+    this.apiKeyService = new APIKeyService()
+    this.initialized = false
+    this.initPromise = this.initialize()
+  }
+
+  async initialize() {
+    try {
+      // Supabase에서 API 키 가져오기
+      const [openaiKey, claudeKey, geminiKey] = await Promise.all([
+        this.apiKeyService.getAPIKey('openai'),
+        this.apiKeyService.getAPIKey('claude'),
+        this.apiKeyService.getAPIKey('gemini')
+      ])
+
+      // 환경변수 우선, 없으면 Supabase에서 가져온 키 사용
+      const finalOpenAIKey = this.getValidKey(process.env.OPENAI_API_KEY) || openaiKey
+      const finalClaudeKey = this.getValidKey(process.env.CLAUDE_API_KEY) || claudeKey
+      const finalGeminiKey = this.getValidKey(process.env.GEMINI_API_KEY) || geminiKey
+
+      console.log('AIService initialization:', {
+        hasOpenAIKey: !!finalOpenAIKey,
+        hasClaudeKey: !!finalClaudeKey,
+        hasGeminiKey: !!finalGeminiKey,
+        source: {
+          openai: this.getValidKey(process.env.OPENAI_API_KEY) ? 'env' : 'supabase',
+          claude: this.getValidKey(process.env.CLAUDE_API_KEY) ? 'env' : 'supabase',
+          gemini: this.getValidKey(process.env.GEMINI_API_KEY) ? 'env' : 'supabase'
+        }
+      })
+      
+      // OpenAI API 키 설정
+      this.openaiKey = finalOpenAIKey
+      
+      // Google Gemini 설정
+      if (finalGeminiKey) {
+        this.gemini = new GoogleGenerativeAI(finalGeminiKey)
+        this.geminiModel = this.gemini.getGenerativeModel({ 
+          model: 'gemini-1.5-pro',
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.8,
+            topK: 40,
+            maxOutputTokens: 4096,
+          }
+        })
+      }
+
+      // Anthropic Claude 설정
+      if (finalClaudeKey) {
+        this.claude = new Anthropic({
+          apiKey: finalClaudeKey
+        })
+      }
+
+      this.initialized = true
+    } catch (error) {
+      console.error('Failed to initialize AI Service:', error)
+      // 초기화 실패해도 환경변수 키로 폴백
+      this.fallbackToEnvKeys()
+    }
+  }
+
+  getValidKey(key) {
+    if (!key) return null
+    if (key.includes('your_') || key.includes('your-')) return null
+    return key
+  }
+
+  fallbackToEnvKeys() {
+    const envOpenAI = this.getValidKey(process.env.OPENAI_API_KEY)
+    const envClaude = this.getValidKey(process.env.CLAUDE_API_KEY)
+    const envGemini = this.getValidKey(process.env.GEMINI_API_KEY)
+
+    if (envOpenAI) this.openaiKey = envOpenAI
+    if (envGemini) {
+      this.gemini = new GoogleGenerativeAI(envGemini)
       this.geminiModel = this.gemini.getGenerativeModel({ 
         model: 'gemini-1.5-pro',
         generationConfig: {
@@ -31,16 +95,16 @@ class AIService {
         }
       })
     }
-
-    // Anthropic Claude 설정
-    if (process.env.CLAUDE_API_KEY && process.env.CLAUDE_API_KEY !== 'your_claude_api_key_here') {
-      this.claude = new Anthropic({
-        apiKey: process.env.CLAUDE_API_KEY
-      })
+    if (envClaude) {
+      this.claude = new Anthropic({ apiKey: envClaude })
     }
   }
 
   async generateContent(request) {
+    // 초기화 대기
+    if (!this.initialized) {
+      await this.initPromise
+    }
     const {
       provider = 'gemini',
       contentType = 'reading',

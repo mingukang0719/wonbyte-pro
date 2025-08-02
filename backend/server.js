@@ -29,6 +29,7 @@ app.use(helmet())
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
+        'https://wonbyte-pro-app.vercel.app',
         'https://onbyte-print.netlify.app', 
         'https://edutext-pro.netlify.app', 
         'https://onbyte-print-frontend.onrender.com',

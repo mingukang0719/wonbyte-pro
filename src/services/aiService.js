@@ -10,7 +10,8 @@ class AIService {
     this.demoService = new DemoService()
     this.clientAIService = ClientAIService
     this.isDemo = config.demo || config.apiUrl === 'demo'
-    this.useClientAI = hasApiKeys() && !this.baseURL.includes('localhost')
+    // 항상 백엔드 API 사용하도록 변경 (클라이언트 직접 호출 비활성화)
+    this.useClientAI = false
   }
 
   async generateContent(request) {
