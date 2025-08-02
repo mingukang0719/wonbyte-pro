@@ -76,8 +76,7 @@ class AIService {
 
       const request = {
         contentType: 'analysis',
-        text: text,
-        gradeLevel: gradeLevel,
+        targetAge: gradeLevel,
         prompt: `다음 지문의 문해력 난이도를 분석해주세요: ${text}`
       }
 
@@ -102,9 +101,7 @@ class AIService {
 
       const request = {
         contentType: 'vocabulary_extraction',
-        text: text,
-        gradeLevel: gradeLevel,
-        count: count,
+        targetAge: gradeLevel,
         prompt: `다음 지문에서 ${gradeLevel} 수준의 핵심 어휘 ${count}개를 추출하고 의미를 설명해주세요: ${text}`
       }
 
@@ -128,9 +125,7 @@ class AIService {
 
       const request = {
         contentType: 'reading_problems',
-        text: text,
-        problemType: problemType,
-        count: count,
+        targetAge: 'elem4', // Default grade level
         prompt: `다음 지문을 바탕으로 ${problemType} 문제를 ${count}개 생성해주세요: ${text}`
       }
 
