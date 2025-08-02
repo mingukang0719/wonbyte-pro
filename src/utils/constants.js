@@ -1,5 +1,5 @@
 // 전역 상수 및 설정
-export const CONSTANTS = {
+export const CONSTANTS = Object.freeze({
   // API 제공자
   API_PROVIDERS: {
     OPENAI: 'openai',
@@ -84,10 +84,10 @@ export const CONSTANTS = {
     GENERATING_PROBLEMS: '문제를 생성하고 있습니다...',
     PROCESSING_FILE: '파일을 처리하고 있습니다...'
   }
-}
+})
 
 // 주제 카테고리
-export const TOPIC_CATEGORIES = [
+export const TOPIC_CATEGORIES = Object.freeze([
   { id: 'game', label: '🎮 게임 & 기술', keywords: ['게임', '인공지능', '로봇', '메타버스'] },
   { id: 'sports', label: '⚽ 스포츠', keywords: ['축구', '야구', '올림픽', '스포츠 선수'] },
   { id: 'music', label: '🎵 음악 & 엔터테인먼트', keywords: ['K-pop', '아이돌', '영화', '드라마'] },
@@ -97,7 +97,7 @@ export const TOPIC_CATEGORIES = [
   { id: 'art', label: '🎨 예술 & 창작', keywords: ['미술', '만화', '공예', '창작 활동'] },
   { id: 'daily', label: '📱 일상 & 학교생활', keywords: ['친구 관계', '가족', '학교 이야기', '성장'] },
   { id: 'custom', label: '📚 사용자 정의', keywords: [] }
-]
+])
 
 // 학년 옵션
 export const GRADE_OPTIONS = [

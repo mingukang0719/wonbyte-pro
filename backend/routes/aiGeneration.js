@@ -106,7 +106,6 @@ router.post('/generate-from-template', adminAuthMiddleware, requirePermission('g
     console.error('Error stack:', error.stack)
     console.error('Environment check:', {
       hasClaudeKey: !!process.env.CLAUDE_API_KEY,
-      claudeKeyLength: process.env.CLAUDE_API_KEY?.length,
       provider: req.body.provider
     })
     

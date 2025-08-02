@@ -85,7 +85,23 @@ module.exports = (env, argv) => {
     optimization: {
       splitChunks: {
         chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+            priority: 10,
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            priority: 5,
+            reuseExistingChunk: true,
+          },
+        },
       },
+      usedExports: true,
+      sideEffects: false,
     },
     devtool: isProduction ? 'source-map' : 'eval-source-map',
   };

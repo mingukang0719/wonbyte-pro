@@ -638,7 +638,7 @@ ${this.getJsonFormat(contentType)}
   }
 
   async logGeneration(userId, provider, prompt, result) {
-    // TODO: 데이터베이스에 생성 로그 저장
+    // AI 생성 로그를 콘솔에 기록 (향후 데이터베이스 연동 가능)
     console.log('Generation Log:', {
       userId,
       provider,
@@ -646,6 +646,15 @@ ${this.getJsonFormat(contentType)}
       tokensUsed: result.tokensUsed,
       timestamp: new Date().toISOString()
     })
+    
+    // 향후 구현: Supabase ai_generation_logs 테이블에 저장
+    // await this.supabase.from('ai_generation_logs').insert({
+    //   user_id: userId,
+    //   provider: provider,
+    //   prompt_length: prompt.length,
+    //   tokens_used: result.tokensUsed,
+    //   created_at: new Date().toISOString()
+    // })
   }
 
   // AI 제공업체 상태 확인

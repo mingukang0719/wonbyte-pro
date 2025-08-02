@@ -34,7 +34,7 @@ export function throttle(func, limit = 1000) {
   let lastFunc
   let lastRan
   
-  return function(...args) {
+  const throttled = function(...args) {
     if (!inThrottle) {
       func.apply(this, args)
       lastRan = Date.now()
@@ -49,4 +49,39 @@ export function throttle(func, limit = 1000) {
       }, Math.max(limit - (Date.now() - lastRan), 0))
     }
   }
+  
+  // 쓰로틀 취소 메서드
+  throttled.cancel = () => {
+    clearTimeout(lastFunc)
+    inThrottle = false
+  }
+  
+  return throttled
+}
+
+/**
+ * requestAnimationFrame을 이용한 최적화된 스크롤 핸들러
+ * @param {Function} callback - 실행할 콜백 함수
+ * @returns {Function} 최적화된 스크롤 핸들러
+ */
+export function rafThrottle(callback) {
+  let rafId = null
+  
+  const throttled = function(...args) {
+    if (rafId === null) {
+      rafId = requestAnimationFrame(() => {
+        callback.apply(this, args)
+        rafId = null
+      })
+    }
+  }
+  
+  throttled.cancel = () => {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId)
+      rafId = null
+    }
+  }
+  
+  return throttled
 }

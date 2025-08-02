@@ -55,13 +55,25 @@ app.use(helmet({
   contentSecurityPolicy: false
 }))
 
-// Rate limiting
-const limiter = rateLimit({
+// Rate limiting with different limits for different endpoints
+const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  message: { error: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 })
-app.use('/api/', limiter)
+
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // limit AI generation requests
+  message: { error: 'AI generation rate limit exceeded. Please wait before making another request.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use('/api/', generalLimiter)
+app.use('/api/ai/', aiLimiter)
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
@@ -84,11 +96,8 @@ app.get('/api/health', async (req, res) => {
       environment: {
         nodeEnv: process.env.NODE_ENV,
         hasClaudeKey: !!process.env.CLAUDE_API_KEY,
-        claudeKeyLength: process.env.CLAUDE_API_KEY?.length,
         hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-        openaiKeyLength: process.env.OPENAI_API_KEY?.length,
         hasGeminiKey: !!process.env.GEMINI_API_KEY,
-        geminiKeyLength: process.env.GEMINI_API_KEY?.length,
         hasJwtSecret: !!process.env.JWT_SECRET,
         hasEncryptionSecret: !!process.env.API_KEY_ENCRYPTION_SECRET
       }
@@ -235,8 +244,8 @@ app.get('/api/pdf/download/:fileName', async (req, res) => {
   try {
     const { fileName } = req.params
     
-    // TODO: 실제 구현에서는 파일 저장소에서 HTML 파일을 읽어서 반환
-    // 현재는 기본 템플릿 반환
+    // 기본 PDF 미리보기 템플릿 반환
+    // 향후 파일 저장소 통합 시 확장 가능
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.send(`
       <!DOCTYPE html>
