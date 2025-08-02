@@ -434,7 +434,9 @@ router.post('/extract-vocabulary', async (req, res) => {
 
     res.json({
       success: true,
-      vocabulary,
+      content: {
+        vocabularyList: vocabulary
+      },
       metadata: {
         provider: 'openai',
         tokensUsed: result.tokensUsed,
@@ -506,7 +508,9 @@ router.post('/generate-problems', async (req, res) => {
 
     res.json({
       success: true,
-      problems,
+      content: {
+        problems: problems
+      },
       metadata: {
         provider: 'openai',
         tokensUsed: result.tokensUsed,
@@ -587,7 +591,7 @@ router.post('/analyze-text', async (req, res) => {
 
     res.json({
       success: true,
-      analysis,
+      content: analysis,
       metadata: {
         provider: 'openai',
         tokensUsed: result.tokensUsed,
