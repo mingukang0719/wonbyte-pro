@@ -167,6 +167,21 @@ class AIService {
       return data
     } catch (error) {
       console.error('Vocabulary Extraction Error:', error)
+      
+      // Failed to fetch 오류 또는 네트워크 오류 발생 시 자동으로 데모 데이터 반환
+      if (error.message.includes('Failed to fetch') || 
+          error.name === 'NetworkError' || 
+          error.name === 'TypeError') {
+        console.log('Vocabulary extraction fetch failed, falling back to demo data')
+        const fallbackResult = this.mockExtractVocabulary(text, count)
+        
+        // fallback이 성공했으면 에러를 throw하지 않음
+        if (fallbackResult && fallbackResult.success) {
+          console.log('Fallback vocabulary data generated successfully')
+          return fallbackResult
+        }
+      }
+      
       throw error
     }
   }
@@ -208,6 +223,21 @@ class AIService {
       return data
     } catch (error) {
       console.error('Problem Generation Error:', error)
+      
+      // Failed to fetch 오류 또는 네트워크 오류 발생 시 자동으로 데모 데이터 반환
+      if (error.message.includes('Failed to fetch') || 
+          error.name === 'NetworkError' || 
+          error.name === 'TypeError') {
+        console.log('Problem generation fetch failed, falling back to demo data')
+        const fallbackResult = this.mockGenerateProblems(text, problemType, count)
+        
+        // fallback이 성공했으면 에러를 throw하지 않음
+        if (fallbackResult && fallbackResult.success) {
+          console.log('Fallback problem data generated successfully')
+          return fallbackResult
+        }
+      }
+      
       throw error
     }
   }
