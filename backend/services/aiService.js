@@ -256,7 +256,7 @@ class AIService {
           messages: [
             {
               role: 'system',
-              content: '당신은 한국어 교육 전문가입니다. 항상 JSON 형식으로만 응답하세요.'
+              content: '당신은 한국어 교육 전문가입니다. 반드시 유효한 JSON 형식으로만 응답하세요. 어떤 인사말, 설명, 안내문구도 포함하지 마세요. 오직 요청된 JSON 데이터만 반환하세요.'
             },
             {
               role: 'user',
@@ -495,11 +495,11 @@ ${contentType === 'reading' ? `**중요**: 지문은 반드시 ${options.content
 
     return `${enhancedPrompt}
 
-다음 JSON 형식으로 정확히 응답해주세요:
+다음 JSON 형식으로 정확히 응답해주세요. 절대로 JSON 외의 다른 텍스트(인사말, 설명, 안내문구 등)는 포함하지 마세요:
 
 ${this.getJsonFormat(contentType)}
 
-중요: 반드시 유효한 JSON 형식으로만 응답하고, 추가 설명은 JSON 내부에 포함시켜주세요.`
+중요: 오직 유효한 JSON만 응답하세요. 어떤 추가 설명도 하지 마세요.`
   }
 
   getJsonFormat(contentType) {
