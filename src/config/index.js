@@ -5,11 +5,8 @@ const isDevelopment = process.env.NODE_ENV === 'development'
 const isProduction = process.env.NODE_ENV === 'production'
 
 // API Configuration
-// Vite 환경 변수 우선, 없으면 프로덕션/개발 환경에 따라 기본값 사용
-const API_URL = import.meta.env?.VITE_API_URL || 
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3001'
-    : 'https://wonbyte-pro.onrender.com')
+// Force correct backend URL - 2025-08-02 15:00
+const API_URL = 'https://wonbyte-pro.onrender.com'
 
 // Supabase Configuration
 const SUPABASE_URL = 'https://jqlouemxgafrbzdxyojl.supabase.co'
