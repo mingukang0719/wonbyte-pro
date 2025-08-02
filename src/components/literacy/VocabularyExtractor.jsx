@@ -31,8 +31,21 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
     try {
       const response = await aiService.extractVocabulary(text, gradeLevel, 5)
       
-      if (response.success && response.content?.vocabularyList) {
-        const extractedWords = response.content.vocabularyList.map((word, index) => ({
+      // Handle both old and new API response formats
+      let vocabularyData = null
+      if (response.success) {
+        // Try new format first (content.vocabularyList)
+        if (response.content?.vocabularyList) {
+          vocabularyData = response.content.vocabularyList
+        }
+        // Fallback to old format (vocabulary directly)
+        else if (response.vocabulary) {
+          vocabularyData = response.vocabulary
+        }
+      }
+      
+      if (vocabularyData && vocabularyData.length > 0) {
+        const extractedWords = vocabularyData.map((word, index) => ({
           id: `extracted_${Date.now()}_${index}`,
           ...word,
           isChecked: false,

@@ -29,8 +29,21 @@ export default function ProblemGenerator({ text, gradeLevel, onProblemsChange })
     try {
       const response = await aiService.generateReadingProblems(text, 'mixed', 5)
       
-      if (response.success && response.content?.problems) {
-        const generatedProblems = response.content.problems.map((problem, index) => ({
+      // Handle both old and new API response formats
+      let problemsData = null
+      if (response.success) {
+        // Try new format first (content.problems)
+        if (response.content?.problems) {
+          problemsData = response.content.problems
+        }
+        // Fallback to old format (problems directly)
+        else if (response.problems) {
+          problemsData = response.problems
+        }
+      }
+      
+      if (problemsData && problemsData.length > 0) {
+        const generatedProblems = problemsData.map((problem, index) => ({
           id: `generated_${Date.now()}_${index}`,
           ...problem,
           isCustom: false
