@@ -73,8 +73,41 @@ class AIService {
 
   getValidKey(key) {
     if (!key) return null
-    if (key.includes('your_') || key.includes('your-')) return null
-    return key
+    
+    // Check for common placeholder patterns
+    const placeholders = [
+      'your_',
+      'your-',
+      'placeholder',
+      'example',
+      'test_key',
+      'dummy',
+      'fake',
+      'api_key_here'
+    ]
+    
+    const keyLower = key.toLowerCase()
+    for (const placeholder of placeholders) {
+      if (keyLower.includes(placeholder)) {
+        console.log(`Invalid API key detected (contains "${placeholder}"): ${key.substring(0, 10)}...`)
+        return null
+      }
+    }
+    
+    // Valid OpenAI key should start with sk- and be longer than 40 chars
+    if (key.startsWith('sk-') && key.length > 40) {
+      console.log(`Valid OpenAI key detected: ${key.substring(0, 10)}...`)
+      return key
+    }
+    
+    // Valid Claude key should be longer than 30 chars and not start with sk-
+    if (key.length > 30 && !key.startsWith('sk-')) {
+      console.log(`Valid Claude/Gemini key detected: ${key.substring(0, 10)}...`)
+      return key
+    }
+    
+    console.log(`API key validation failed for key: ${key.substring(0, 10)}... (length: ${key.length})`)
+    return null
   }
 
   fallbackToEnvKeys() {
@@ -509,15 +542,18 @@ ${this.getJsonFormat(contentType)}
         } else if (topic.includes('동물') || topic.includes('자연')) {
           title = "동물과 자연"
           content = "숲속에는 많은 동물들이 살고 있습니다. 다람쥐는 나무 위에서 도토리를 모으고, 토끼는 풀밭에서 뛰어놉니다. 새들은 하늘을 자유롭게 날아다니며 아름다운 노래를 부릅니다. 동물들은 각자 다른 모습과 특징을 가지고 있어요. 사자는 힘이 세고, 치타는 빠르게 달릴 수 있습니다. 코끼리는 크고, 개미는 작지만 모두 소중한 생명입니다. 우리는 동물들과 자연을 보호해야 합니다. 쓰레기를 함부로 버리지 않고, 동물들의 집을 지켜주어야 해요."
+        } else if (topic.includes('포켓몬') || topic.includes('Pokemon')) {
+          title = "포켓몬스터"
+          content = "포켓몬스터는 전 세계 어린이들이 좋아하는 캐릭터들입니다. 피카츄는 가장 유명한 포켓몬으로 노란색 몸에 빨간 볼을 가지고 있어요. 포켓몬들은 각각 다른 능력을 가지고 있습니다. 물 타입, 불 타입, 풀 타입 등 여러 종류가 있어요. 포켓몬 트레이너는 포켓몬들과 친구가 되어 함께 모험을 떠납니다. 포켓몬들을 돌보고 사랑하는 것이 가장 중요합니다. 우리도 동물이나 친구들을 아끼고 보살펴야 해요."
         } else {
           title = topic
-          content = `${topic}에 대한 내용입니다. 이것은 실제 AI가 생성하지 않은 샘플 지문입니다. API 키를 올바르게 설정하면 주제에 맞는 실제 콘텐츠가 생성됩니다. ${topic}는 매우 흥미로운 주제입니다. 더 자세한 내용을 원한다면 AI 서비스 설정을 확인해주세요.`
+          content = `${topic}는 정말 흥미로운 주제입니다. 이 주제에 대해 더 많은 것을 배워보면 좋겠어요. ${topic}에 관련된 다양한 이야기들이 있습니다. 우리 주변에서도 ${topic}와 관련된 것들을 찾아볼 수 있어요. 새로운 것을 배우는 것은 언제나 즐거운 일입니다. ${topic}에 대해 더 알아보고 싶다면 책을 읽거나 어른들께 물어보세요.`
         }
       }
       
       mockContent = {
         title: title,
-        description: `${topic}에 대한 샘플 지문 (API 키 필요)`,
+        description: `${topic}에 대한 읽기 지문`,
         mainContent: {
           introduction: content,
           keyPoints: [
