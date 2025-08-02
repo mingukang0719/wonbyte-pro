@@ -15,6 +15,7 @@ import { validateFile } from '../utils/validation'
 import { useApiCall, useParallelApiCalls } from '../hooks/useApiCall'
 import { useTextAnalysis } from '../hooks/useTextAnalysis'
 import { generatePDF } from '../utils/pdfGenerator'
+import { getAvailableProviders } from '../config/apiKeys'
 import ErrorMessage from '../components/common/ErrorMessage'
 import AnalysisChart from '../components/literacy/AnalysisChart'
 import ProblemCard from '../components/literacy/ProblemCard'
@@ -30,6 +31,10 @@ export default function ReadingTrainerPage() {
   const [selectedGrade, setSelectedGrade] = useState('elem4')
   const [selectedLength, setSelectedLength] = useState('800')
   const [customLength, setCustomLength] = useState('')
+  const [selectedProvider, setSelectedProvider] = useState('openai')
+  
+  // 사용 가능한 AI 제공자
+  const availableProviders = getAvailableProviders()
   
   // 지문 관련 상태
   const [generatedText, setGeneratedText] = useState('')
@@ -68,7 +73,7 @@ export default function ReadingTrainerPage() {
       const prompt = `${topic}에 대한 ${selectedGrade} 수준의 한국어 읽기 지문을 ${length}자로 작성해주세요.`
       
       const response = await generateTextApi({
-        provider: 'gemini',
+        provider: selectedProvider,
         contentType: 'reading',
         prompt,
         targetAge: selectedGrade,
@@ -377,6 +382,26 @@ export default function ReadingTrainerPage() {
                   </select>
                 </div>
 
+                {/* AI 제공자 선택 */}
+                {availableProviders.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      AI 모델 선택
+                    </label>
+                    <select
+                      value={selectedProvider}
+                      onChange={(e) => setSelectedProvider(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      {availableProviders.map(provider => (
+                        <option key={provider.id} value={provider.id}>
+                          {provider.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 {/* 지문 길이 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -410,10 +435,29 @@ export default function ReadingTrainerPage() {
                   )}
                 </div>
 
+                {/* API 키 설정 안내 */}
+                {availableProviders.length === 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800 mb-2">
+                      <strong>AI API 키가 설정되지 않았습니다.</strong>
+                    </p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      AI 기능을 사용하려면 다음 중 하나의 API 키가 필요합니다:
+                    </p>
+                    <ul className="text-sm text-gray-600 space-y-1 ml-4">
+                      <li>• OpenAI API 키: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://platform.openai.com/api-keys</a></li>
+                      <li>• Anthropic Claude API 키: <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://console.anthropic.com/</a></li>
+                    </ul>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Vercel 환경 변수에 VITE_OPENAI_API_KEY 또는 VITE_ANTHROPIC_API_KEY를 추가해주세요.
+                    </p>
+                  </div>
+                )}
+
                 {/* 생성 버튼 */}
                 <button
                   onClick={handleGenerateText}
-                  disabled={!selectedTopic || generatingText}
+                  disabled={!selectedTopic || generatingText || availableProviders.length === 0}
                   className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {generatingText ? (

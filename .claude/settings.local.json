@@ -56,7 +56,8 @@
       "Bash(start /B npm run dev)",
       "Bash(npm run lint)",
       "Bash(npm install:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

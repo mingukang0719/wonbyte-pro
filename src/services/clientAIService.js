@@ -56,7 +56,9 @@ class ClientAIService {
         })
       },
       anthropic: {
-        url: 'https://api.anthropic.com/v1/messages',
+        // Anthropic API는 CORS를 지원하지 않으므로 프록시 서버가 필요합니다
+        // 백엔드 서버를 통해 호출하거나, Vercel Edge Function을 사용해야 합니다
+        url: '/api/anthropic', // 프록시 엔드포인트
         headers: (apiKey) => ({
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
