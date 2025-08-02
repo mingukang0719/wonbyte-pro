@@ -6,7 +6,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 // API Configuration
 // Vite 환경 변수 우선, 없으면 기본값 사용
 const API_URL = import.meta.env?.VITE_API_URL || (isProduction 
-  ? 'https://wonbyte-pro-backend.onrender.com' 
+  ? 'https://edutext-pro-backend.onrender.com' 
   : 'http://localhost:3001')
 
 // Supabase Configuration
