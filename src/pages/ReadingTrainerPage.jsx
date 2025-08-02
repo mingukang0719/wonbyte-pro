@@ -21,6 +21,7 @@ import AnalysisChart from '../components/literacy/AnalysisChart'
 import ProblemCard from '../components/literacy/ProblemCard'
 import TextDisplay from '../components/literacy/TextDisplay'
 import VocabularyExtractor from '../components/literacy/VocabularyExtractor'
+import ProblemGenerator from '../components/literacy/ProblemGenerator'
 
 export default function ReadingTrainerPage() {
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
@@ -45,9 +46,10 @@ export default function ReadingTrainerPage() {
   // 텍스트 분석 훅 사용
   const { analysisResult, analyzing, analyzeText } = useTextAnalysis()
   
-  // 문제 관련 상태
+  // 문제 관련 상태  
   const [vocabularyProblems, setVocabularyProblems] = useState([])
   const [readingProblems, setReadingProblems] = useState([])
+  const [generatedProblems, setGeneratedProblems] = useState([])
   const [selectedProblemCount] = useState({ vocabulary: 10, reading: 5 })
   
   // 어휘 관련 상태
@@ -104,6 +106,20 @@ export default function ReadingTrainerPage() {
   const handleVocabularyChange = useCallback((vocabularyList) => {
     setSelectedVocabulary(vocabularyList)
   }, [])
+  
+  // 문제 변경 핸들러
+  const handleProblemsChange = useCallback((problemsList) => {
+    setGeneratedProblems(problemsList)
+  }, [])
+  
+  // 지문 편집 핸들러
+  const handleTextEdit = useCallback((newText) => {
+    if (mode === 'generate') {
+      setGeneratedText(newText)
+    } else {
+      setUserText(newText)
+    }
+  }, [mode])
   
   // 파일 업로드 처리 (메모이제이션)
   const handleFileUpload = useCallback(async (event) => {
@@ -235,6 +251,7 @@ export default function ReadingTrainerPage() {
         text: textToExport,
         analysisResult,
         selectedVocabulary: selectedVocabulary.filter(word => word.isChecked),
+        generatedProblems,
         vocabularyProblems,
         readingProblems
       })
@@ -244,7 +261,7 @@ export default function ReadingTrainerPage() {
       console.error('PDF 생성 오류:', error)
       setErrorMessage('PDF 생성 중 오류가 발생했습니다')
     }
-  }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, vocabularyProblems, readingProblems])
+  }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, generatedProblems, vocabularyProblems, readingProblems])
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -655,6 +672,8 @@ export default function ReadingTrainerPage() {
               text={mode === 'generate' ? generatedText : userText}
               title="읽기 지문"
               showCharCount={true}
+              editable={true}
+              onTextChange={handleTextEdit}
             />
 
             {/* 문해력 분석 */}
@@ -683,6 +702,15 @@ export default function ReadingTrainerPage() {
                 text={mode === 'generate' ? generatedText : userText}
                 gradeLevel={selectedGrade}
                 onVocabularyChange={handleVocabularyChange}
+              />
+            </div>
+
+            {/* 문해력 문제 생성 */}
+            <div className="mb-6">
+              <ProblemGenerator
+                text={mode === 'generate' ? generatedText : userText}
+                gradeLevel={selectedGrade}
+                onProblemsChange={handleProblemsChange}
               />
             </div>
 
