@@ -1,4 +1,5 @@
 // EduText Pro Backend - Ultra Minimal Version
+// Force rebuild: 2025-08-02 13:30
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
