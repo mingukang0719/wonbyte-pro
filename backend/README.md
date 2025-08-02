@@ -1,4 +1,4 @@
-# EduText Pro Backend
+# Wonbyte Pro Backend
 
 한국어 문해력 교육 플랫폼 백엔드 서비스
 

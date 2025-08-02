@@ -1,7 +1,7 @@
 services:
-  # Backend API D§
+  # Backend API Service
   - type: web
-    name: edutext-pro-backend
+    name: wonbyte-pro-backend
     env: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
@@ -17,17 +17,17 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyanJkZHdyc2FzamlmaGdoemZsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjQxODU1MiwiZXhwIjoyMDY3OTk0NTUyfQ.r3X0g1-J7zxDP9sxE7DYiW_o2_78qMbVfdsqEYahd-c
       - key: API_KEY_ENCRYPTION_SECRET
-        value: EduTextPro2024SecretKey!@#$%^&*()1234567890
+        value: WonbyteProo2024SecretKey!@#$%^&*()1234567890
       - key: JWT_SECRET
-        value: EduTextProJWTSecret2024!@#$%^&*()
+        value: WonbyteProJWTSecret2024!@#$%^&*()
       - key: GEMINI_API_KEY
         value: your_gemini_api_key_here
       - key: CLAUDE_API_KEY
         value: your_claude_api_key_here
 
-  # `∏‘‹  ¨t∏  
+  # Frontend Static Site
   - type: static
-    name: edutext-pro-frontend
+    name: wonbyte-pro-frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:

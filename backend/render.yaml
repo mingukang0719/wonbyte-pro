@@ -26,4 +26,4 @@ services:
       - key: API_KEY_ENCRYPTION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://wonbyte-pro-app.vercel.app
+        value: https://wonbyte-pro.vercel.app

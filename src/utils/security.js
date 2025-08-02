@@ -8,7 +8,7 @@ export const isAllowedEnvironment = () => {
   const allowedHosts = [
     'localhost',
     '127.0.0.1',
-    'wonbyte-pro-app.vercel.app',
+    'wonbyte-pro.vercel.app',
     'wonbyte-pro-git-main-mingukang0719s-projects.vercel.app'
   ]
   

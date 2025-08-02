@@ -1,7 +1,7 @@
 {
-  "name": "edutext-pro-backend",
+  "name": "wonbyte-pro-backend",
   "version": "1.0.0",
-  "description": "EduText Pro Backend API Server",
+  "description": "Wonbyte Pro Backend API Server",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -35,7 +35,7 @@
     "api",
     "supabase"
   ],
-  "author": "EduText Pro Team",
+  "author": "Wonbyte Pro Team",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
