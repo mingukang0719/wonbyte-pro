@@ -342,6 +342,18 @@ class AIService {
 사용자가 요청한 주제에 대해 해당 연령과 수준에 맞는 지문을 정확한 글자 수로 작성해야 합니다.
 지문은 교육적 가치가 있고 학생들이 흥미를 느낄 수 있는 내용이어야 합니다.`,
 
+      analysis: `다음 지문의 문해력 난이도를 상세히 분석해주세요.
+텍스트 길이, 어휘 수준, 문장 복잡도, 내용 수준, 배경지식 요구도를 각각 1-10점으로 평가하고,
+해당 학년 수준에 맞는지 판단하여 구체적인 개선 방안을 제시해야 합니다.`,
+
+      vocabulary_extraction: `다음 지문에서 해당 학년에게 어려울 만한 핵심 어휘 5개를 추출하고 분석해주세요.
+각 어휘는 한자어 기반으로 쉽게 풀이하고, 예문, 유의어/반의어(있는 경우만)를 포함해야 합니다.
+학년 수준에 적합한지도 판단해주세요.`,
+
+      reading_problems: `다음 지문을 바탕으로 문해력 훈련 문제 5개를 생성해주세요.
+객관식 문제 3-4개와 1-2문장으로 답할 수 있는 서술형 문제 1-2개를 포함해야 합니다.
+각 문제는 정답과 상세한 해설을 포함해야 합니다.`,
+
       questions: `지문 기반 서술형 문제를 생성해주세요.
 맥락 추론형과 내용 이해형 문제를 포함해야 합니다.`,
 
@@ -373,7 +385,58 @@ class AIService {
       high3: '고등학교 3학년 (18세)'
     }
 
-    return `${basePrompts[contentType] || basePrompts.vocabulary}
+    // 특별한 프롬프트 구조가 필요한 contentType들 처리
+    let enhancedPrompt = ''
+    
+    if (contentType === 'analysis') {
+      enhancedPrompt = `${basePrompts[contentType]}
+
+분석할 지문:
+"${userPrompt}"
+
+설정:
+- 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
+- 난이도 기준: ${options.difficulty} (${difficultyGuides[options.difficulty]})
+
+**분석 기준**:
+1. 텍스트 길이: 해당 학년이 읽기에 적절한 분량인지
+2. 어휘 수준: 사용된 단어들이 학년 수준에 맞는지
+3. 문장 복잡도: 문장 구조의 복잡성 평가
+4. 내용 수준: 주제와 개념의 추상성 정도
+5. 배경지식: 이해에 필요한 사전 지식 요구도`
+    } else if (contentType === 'vocabulary_extraction') {
+      enhancedPrompt = `${basePrompts[contentType]}
+
+지문:
+"${userPrompt}"
+
+설정:
+- 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
+- 추출할 어휘 수: 5개
+
+**추출 기준**:
+- 해당 학년에게 다소 어려울 수 있는 핵심 어휘
+- 교육적 가치가 있는 중요한 단어
+- 한자어는 어원을 활용한 쉬운 설명
+- 일상에서 활용 가능한 실용적 어휘`
+    } else if (contentType === 'reading_problems') {
+      enhancedPrompt = `${basePrompts[contentType]}
+
+지문:
+"${userPrompt}"
+
+설정:
+- 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
+- 문제 수: 5개
+- 문제 구성: 객관식 3-4개, 서술형 1-2개
+
+**문제 유형**:
+1. 내용 이해형 (객관식): 지문의 핵심 내용 파악
+2. 어휘 이해형 (객관식): 중요 단어의 의미
+3. 추론형 (객관식/서술형): 글의 의도나 화자의 생각
+4. 서술형: 1-2문장으로 답할 수 있는 간단한 문제`
+    } else {
+      enhancedPrompt = `${basePrompts[contentType] || basePrompts.vocabulary}
 
 사용자 요청: "${userPrompt}"
 
@@ -382,7 +445,10 @@ class AIService {
 - 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
 - 글자 수: 정확히 ${options.contentLength}자
 
-${contentType === 'reading' ? `**중요**: 지문은 반드시 ${options.contentLength}자로 작성해주세요. 해당 학년 수준에 맞는 어휘와 문체를 사용하여 학생이 이해할 수 있는 내용으로 만들어주세요.` : ''}
+${contentType === 'reading' ? `**중요**: 지문은 반드시 ${options.contentLength}자로 작성해주세요. 해당 학년 수준에 맞는 어휘와 문체를 사용하여 학생이 이해할 수 있는 내용으로 만들어주세요.` : ''}`
+    }
+
+    return `${enhancedPrompt}
 
 다음 JSON 형식으로 정확히 응답해주세요:
 
@@ -406,6 +472,63 @@ ${this.getJsonFormat(contentType)}
     "topic": "실제 주제",
     "difficulty": "난이도"
   }
+}`
+
+      case 'analysis':
+        return `{
+  "title": "문해력 난이도 분석 결과",
+  "analysis": {
+    "textLength": "텍스트 길이 점수 (1-10)",
+    "vocabularyLevel": "어휘 난이도 점수 (1-10)",
+    "sentenceComplexity": "문장 복잡도 점수 (1-10)",
+    "contentLevel": "내용 수준 점수 (1-10)",
+    "backgroundKnowledge": "배경지식 요구도 점수 (1-10)",
+    "totalScore": "전체 난이도 점수 (1-10)"
+  },
+  "feedback": "학년 수준에 맞는지에 대한 상세한 분석과 개선 제안",
+  "recommendations": [
+    "구체적인 개선 방안 1",
+    "구체적인 개선 방안 2"
+  ]
+}`
+
+      case 'vocabulary_extraction':
+        return `{
+  "title": "어휘 분석 결과",
+  "vocabularyList": [
+    {
+      "word": "어휘",
+      "meaning": "한자어 기반 쉬운 풀이",
+      "etymology": "한자어 어원 (있는 경우)",
+      "synonyms": ["유의어1", "유의어2"],
+      "antonyms": ["반의어1", "반의어2"],
+      "difficulty": "★★★☆☆",
+      "example": "예문",
+      "gradeAppropriate": true
+    }
+  ]
+}`
+
+      case 'reading_problems':
+        return `{
+  "title": "문해력 문제",
+  "problems": [
+    {
+      "type": "multiple_choice",
+      "question": "문제 내용",
+      "options": ["선택지1", "선택지2", "선택지3", "선택지4"],
+      "correctAnswer": 0,
+      "explanation": "정답 해설"
+    },
+    {
+      "type": "short_answer",
+      "question": "서술형 문제 내용 (1-2문장으로 답할 수 있는)",
+      "expectedLength": "1-2문장",
+      "sampleAnswer": "예시 답안",
+      "gradingCriteria": ["채점 기준 1", "채점 기준 2"],
+      "explanation": "문제 해설"
+    }
+  ]
 }`
 
       case 'vocabulary':
@@ -556,13 +679,133 @@ ${this.getJsonFormat(contentType)}
     console.log(`Mock response for ${provider} with prompt: ${prompt}`)
     
     const isReading = prompt.includes('읽기 지문') || prompt.includes('지문을')
+    const isAnalysis = prompt.includes('분석할 지문') || prompt.includes('난이도를 분석')
+    const isVocabularyExtraction = prompt.includes('어려울 만한 핵심 어휘') || prompt.includes('어휘 5개를 추출')
+    const isReadingProblems = prompt.includes('문해력 훈련 문제') || prompt.includes('문제 5개를 생성')
     const isVocabulary = prompt.includes('어휘') || prompt.includes('vocabulary')
     const isQuestions = prompt.includes('문제') || prompt.includes('questions')
     const isAnswers = prompt.includes('해설') || prompt.includes('answers')
 
     let mockContent
 
-    if (isReading) {
+    if (isAnalysis) {
+      mockContent = {
+        title: "문해력 난이도 분석 결과",
+        analysis: {
+          textLength: "7",
+          vocabularyLevel: "6",
+          sentenceComplexity: "5", 
+          contentLevel: "7",
+          backgroundKnowledge: "6",
+          totalScore: "6.2"
+        },
+        feedback: "이 지문은 해당 학년 수준에 적절한 난이도를 가지고 있습니다. 어휘 수준이 다소 높은 편이므로 사전 어휘 학습을 통해 보완하면 좋겠습니다.",
+        recommendations: [
+          "핵심 어휘를 미리 학습한 후 지문을 읽도록 지도",
+          "문단별로 나누어 단계적으로 읽기 지도",
+          "내용과 관련된 배경지식을 먼저 설명"
+        ]
+      }
+    } else if (isVocabularyExtraction) {
+      mockContent = {
+        title: "어휘 분석 결과",
+        vocabularyList: [
+          {
+            word: "관찰",
+            meaning: "자세히 살펴보는 것",
+            etymology: "觀(볼 관) + 察(살필 찰)",
+            synonyms: ["구경", "살피기"],
+            antonyms: ["무시", "소홀"],
+            difficulty: "★★★☆☆",
+            example: "과학자는 현미경으로 세포를 관찰했습니다.",
+            gradeAppropriate: true
+          },
+          {
+            word: "발전",
+            meaning: "더 나은 상태로 나아가는 것",
+            etymology: "發(발할 발) + 展(펼 전)",
+            synonyms: ["성장", "진보"],
+            antonyms: ["퇴보", "후퇴"],
+            difficulty: "★★☆☆☆",
+            example: "기술의 발전으로 우리 생활이 편리해졌습니다.",
+            gradeAppropriate: true
+          },
+          {
+            word: "환경",
+            meaning: "주변을 둘러싸고 있는 모든 조건",
+            etymology: "環(고리 환) + 境(경계 경)",
+            synonyms: ["주변", "여건"],
+            antonyms: [],
+            difficulty: "★★★☆☆",
+            example: "깨끗한 환경을 만들기 위해 쓰레기를 분리수거해야 합니다.",
+            gradeAppropriate: true
+          },
+          {
+            word: "중요",
+            meaning: "매우 필요하고 소중한 것",
+            etymology: "重(무거울 중) + 要(요할 요)",
+            synonyms: ["소중", "필수"],
+            antonyms: ["불필요", "하찮음"],
+            difficulty: "★★☆☆☆",
+            example: "건강은 무엇보다 중요합니다.",
+            gradeAppropriate: true
+          },
+          {
+            word: "노력",
+            meaning: "목표를 이루기 위해 힘쓰는 것",
+            etymology: "努(힘쓸 노) + 力(힘 력)",
+            synonyms: ["애쓰기", "힘쓰기"],
+            antonyms: ["게으름", "나태"],
+            difficulty: "★★☆☆☆",
+            example: "꾸준한 노력으로 실력이 늘었습니다.",
+            gradeAppropriate: true
+          }
+        ]
+      }
+    } else if (isReadingProblems) {
+      mockContent = {
+        title: "문해력 문제",
+        problems: [
+          {
+            type: "multiple_choice",
+            question: "이 글의 주제로 가장 적절한 것은?",
+            options: ["환경 보호의 중요성", "기술 발전의 문제점", "교육의 필요성", "건강한 생활 습관"],
+            correctAnswer: 0,
+            explanation: "글 전체에서 환경을 보호해야 한다는 내용이 반복적으로 나타나므로 주제는 '환경 보호의 중요성'입니다."
+          },
+          {
+            type: "multiple_choice",
+            question: "글에서 '관찰'의 의미로 가장 적절한 것은?",
+            options: ["대충 보기", "자세히 살펴보기", "빨리 훑어보기", "멀리서 보기"],
+            correctAnswer: 1,
+            explanation: "'관찰'은 어떤 대상을 자세히 살펴보고 연구하는 행위를 의미합니다."
+          },
+          {
+            type: "multiple_choice",
+            question: "글의 내용과 일치하지 않는 것은?",
+            options: ["환경 보호가 필요하다", "기술이 발전하고 있다", "모든 기술은 나쁘다", "우리의 노력이 중요하다"],
+            correctAnswer: 2,
+            explanation: "글에서는 기술 발전 자체를 부정적으로 보지 않으며, 오히려 환경을 위해 활용해야 한다고 말하고 있습니다."
+          },
+          {
+            type: "short_answer",
+            question: "환경을 보호하기 위해 우리가 할 수 있는 일을 두 가지 쓰시오.",
+            expectedLength: "1-2문장",
+            sampleAnswer: "쓰레기 분리수거를 하고, 일회용품 사용을 줄인다.",
+            gradingCriteria: ["환경 보호와 관련된 구체적인 행동 제시", "두 가지 이상의 방법 언급"],
+            explanation: "환경 보호를 위한 실천 방안으로는 재활용, 에너지 절약, 대중교통 이용 등이 있습니다."
+          },
+          {
+            type: "short_answer",
+            question: "글쓴이가 이 글을 쓴 목적을 한 문장으로 쓰시오.",
+            expectedLength: "1문장",
+            sampleAnswer: "환경 보호의 중요성을 알리고 실천을 당부하기 위해서이다.",
+            gradingCriteria: ["글의 주제와 목적 파악", "명확한 문장으로 표현"],
+            explanation: "글 전체의 흐름을 보면 환경 문제의 심각성을 제시하고 해결을 위한 실천을 강조하고 있습니다."
+          }
+        ]
+      }
+    } else if (isReading) {
       // Extract topic from prompt for smarter mock responses
       let topic = "일반 주제"
       let title = "샘플 지문"
