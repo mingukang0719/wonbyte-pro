@@ -234,12 +234,82 @@ app.get('/api/ai/status', async (req, res) => {
 // PDF Generation endpoint
 app.post('/api/pdf/generate', async (req, res) => {
   try {
-    const { title, blocks } = req.body
+    const { 
+      title, 
+      blocks,
+      // 개별 필드들도 지원
+      grade,
+      text,
+      analysisResult,
+      selectedVocabulary,
+      generatedProblems,
+      vocabularyProblems,
+      readingProblems
+    } = req.body
 
-    if (!blocks || !Array.isArray(blocks)) {
+    // blocks가 없으면 개별 필드들로부터 생성
+    let pdfBlocks = blocks
+    if (!pdfBlocks && text) {
+      pdfBlocks = []
+      
+      // 지문 블록
+      if (text) {
+        pdfBlocks.push({
+          type: 'text',
+          title: '지문',
+          content: text,
+          metadata: { grade }
+        })
+      }
+      
+      // 분석 결과 블록
+      if (analysisResult) {
+        pdfBlocks.push({
+          type: 'analysis',
+          title: '난이도 분석',
+          content: analysisResult
+        })
+      }
+      
+      // 어휘 블록
+      if (selectedVocabulary && selectedVocabulary.length > 0) {
+        pdfBlocks.push({
+          type: 'vocabulary',
+          title: '핵심 어휘',
+          content: selectedVocabulary
+        })
+      }
+      
+      // 문제 블록들
+      if (generatedProblems && generatedProblems.length > 0) {
+        pdfBlocks.push({
+          type: 'problems',
+          title: '읽기 문제',
+          content: generatedProblems
+        })
+      }
+      
+      if (vocabularyProblems && vocabularyProblems.length > 0) {
+        pdfBlocks.push({
+          type: 'problems',
+          title: '어휘 문제',
+          content: vocabularyProblems
+        })
+      }
+      
+      if (readingProblems && readingProblems.length > 0) {
+        pdfBlocks.push({
+          type: 'problems',
+          title: '독해 문제',
+          content: readingProblems
+        })
+      }
+    }
+
+    if (!pdfBlocks || !Array.isArray(pdfBlocks) || pdfBlocks.length === 0) {
       return res.status(400).json({ 
         success: false,
-        error: 'Blocks array is required' 
+        error: 'No content to generate PDF' 
       })
     }
 
@@ -247,7 +317,7 @@ app.post('/api/pdf/generate', async (req, res) => {
     const PDFService = (await import('./services/pdfService.js')).default
     const pdfService = new PDFService()
 
-    const result = await pdfService.generatePDF({ title, blocks })
+    const result = await pdfService.generatePDF({ title, blocks: pdfBlocks })
 
     res.json(result)
 
@@ -377,6 +447,7 @@ app.post('/api/generate', async (req, res) => {
 app.use('/api/admin/templates', templateRoutes)
 
 // AI generation routes
+console.log('Mounting AI generation routes at /api/ai')
 app.use('/api/ai', aiGenerationRoutes)
 
 // PDF generation routes

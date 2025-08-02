@@ -99,6 +99,7 @@ class AIService {
     // Be conservative - only remove clearly problematic characters
     let cleanedKey = key.toString()
       .trim()
+      .replace(/^["']|["']$/g, '') // Remove surrounding quotes
       .replace(/[\r\n\t\f\v]/g, '') // Remove line breaks and tabs
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters but keep printable
     
@@ -372,6 +373,9 @@ class AIService {
   }
 
   buildKoreanLearningPrompt(userPrompt, contentType, options) {
+    // userPrompt가 문자열인지 확인
+    const promptText = typeof userPrompt === 'string' ? userPrompt : String(userPrompt || '')
+    
     const basePrompts = {
       vocabulary: `지문에서 어려운 어휘를 추출하고 분석해주세요. 
 각 어휘의 의미, 유의어, 반의어, 난이도를 포함해야 합니다.`,
@@ -433,7 +437,7 @@ class AIService {
       enhancedPrompt = `${basePrompts[contentType]}
 
 분석할 지문:
-"${userPrompt}"
+"${promptText}"
 
 설정:
 - 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
@@ -449,7 +453,7 @@ class AIService {
       enhancedPrompt = `${basePrompts[contentType]}
 
 지문:
-"${userPrompt}"
+"${promptText}"
 
 설정:
 - 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
@@ -464,7 +468,7 @@ class AIService {
       enhancedPrompt = `${basePrompts[contentType]}
 
 지문:
-"${userPrompt}"
+"${promptText}"
 
 설정:
 - 대상 연령: ${options.targetAge} (${ageGuides[options.targetAge]})
@@ -479,7 +483,7 @@ class AIService {
     } else {
       enhancedPrompt = `${basePrompts[contentType] || basePrompts.vocabulary}
 
-사용자 요청: "${userPrompt}"
+사용자 요청: "${promptText}"
 
 설정:
 - 난이도: ${options.difficulty} (${difficultyGuides[options.difficulty]})
