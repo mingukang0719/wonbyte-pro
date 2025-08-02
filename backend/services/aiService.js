@@ -482,6 +482,8 @@ ${this.getJsonFormat(contentType)}
 
   // 모의 응답 생성 (API 키가 없을 때 사용)
   getMockResponse(provider, prompt) {
+    console.log(`Mock response for ${provider} with prompt: ${prompt}`)
+    
     const isReading = prompt.includes('읽기 지문') || prompt.includes('지문을')
     const isVocabulary = prompt.includes('어휘') || prompt.includes('vocabulary')
     const isQuestions = prompt.includes('문제') || prompt.includes('questions')
@@ -490,11 +492,34 @@ ${this.getJsonFormat(contentType)}
     let mockContent
 
     if (isReading) {
+      // Extract topic from prompt for smarter mock responses
+      let topic = "일반 주제"
+      let title = "샘플 지문"
+      let content = "이것은 API 키가 설정되지 않아 생성된 샘플 지문입니다."
+      
+      // Try to extract topic from prompt patterns
+      const topicMatch = prompt.match(/(.+?)에 대한.*지문/);
+      if (topicMatch) {
+        topic = topicMatch[1].trim();
+        
+        // Generate topic-appropriate sample content
+        if (topic.includes('로봇') || topic.includes('인공지능') || topic.includes('AI')) {
+          title = "로봇과 인공지능"
+          content = "요즘 우리 주변에서 로봇을 많이 볼 수 있습니다. 청소 로봇은 집안을 깨끗하게 치워주고, 음성 인식 기기는 우리가 하는 말을 알아듣고 답해줍니다. 인공지능은 컴퓨터가 사람처럼 생각하고 배울 수 있게 하는 기술입니다. 병원에서는 의사가 병을 진단할 때 도움을 주고, 자동차는 스스로 운전할 수 있게 됩니다. 하지만 로봇과 인공지능은 사람을 대신하는 것이 아니라 우리를 도와주는 친구입니다. 앞으로 더 똑똑해진 로봇들이 우리 생활을 더욱 편리하게 만들어 줄 것입니다. 우리도 새로운 기술을 배우고 잘 활용해야 합니다."
+        } else if (topic.includes('동물') || topic.includes('자연')) {
+          title = "동물과 자연"
+          content = "숲속에는 많은 동물들이 살고 있습니다. 다람쥐는 나무 위에서 도토리를 모으고, 토끼는 풀밭에서 뛰어놉니다. 새들은 하늘을 자유롭게 날아다니며 아름다운 노래를 부릅니다. 동물들은 각자 다른 모습과 특징을 가지고 있어요. 사자는 힘이 세고, 치타는 빠르게 달릴 수 있습니다. 코끼리는 크고, 개미는 작지만 모두 소중한 생명입니다. 우리는 동물들과 자연을 보호해야 합니다. 쓰레기를 함부로 버리지 않고, 동물들의 집을 지켜주어야 해요."
+        } else {
+          title = topic
+          content = `${topic}에 대한 내용입니다. 이것은 실제 AI가 생성하지 않은 샘플 지문입니다. API 키를 올바르게 설정하면 주제에 맞는 실제 콘텐츠가 생성됩니다. ${topic}는 매우 흥미로운 주제입니다. 더 자세한 내용을 원한다면 AI 서비스 설정을 확인해주세요.`
+        }
+      }
+      
       mockContent = {
-        title: "봄에 피는 꽃들",
-        description: "초등학교 1학년을 위한 봄 꽃 이야기",
+        title: title,
+        description: `${topic}에 대한 샘플 지문 (API 키 필요)`,
         mainContent: {
-          introduction: "따뜻한 봄이 오면 여러 가지 예쁜 꽃들이 피어납니다. 개나리는 노란색으로 먼저 피고, 진달래는 분홍색으로 예쁘게 핍니다. 벚꽃은 하얀색과 분홍색으로 피어서 마치 눈이 내린 것 같아요. 꽃들은 우리에게 봄이 왔다고 알려주는 친구들입니다. 꽃들을 보면 마음이 기뻐집니다. 우리는 꽃을 소중히 여겨야 해요. 꽃을 꺾지 말고 예쁘게 구경만 해야 합니다. 꽃들도 우리처럼 살아있는 생명이기 때문입니다. 봄에는 가족과 함께 꽃구경을 가면 좋겠어요. 공원이나 산에 가서 여러 가지 꽃들을 찾아보세요. 꽃의 색깔과 모양을 자세히 관찰해보면 정말 신기합니다. 자연은 우리에게 아름다운 선물을 주는 것 같아요.",
+          introduction: content,
           keyPoints: [
             "봄에는 여러 가지 꽃들이 핀다",
             "꽃마다 색깔과 모양이 다르다", 
