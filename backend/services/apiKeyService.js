@@ -1,189 +1,87 @@
 import { createClient } from '@supabase/supabase-js'
 import APIKeyManager from '../utils/encryption.js'
-import dotenv from 'dotenv'
-
-dotenv.config()
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
 
 class APIKeyService {
   constructor() {
+    this.supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
     this.encryptionManager = new APIKeyManager()
+    this.apiKeys = {}
+    this.lastFetch = null
+    this.cacheTimeout = 5 * 60 * 1000 // 5 minutes cache
   }
 
-  /**
-   * API 키를 암호화해서 Supabase에 저장
-   */
-  async storeAPIKey(provider, apiKey, userId) {
-    try {
-      // API 키 암호화
-      const encryptedData = this.encryptionManager.encrypt(apiKey)
-      
-      // Supabase에 저장
-      const { data, error } = await supabase
-        .from('api_keys')
-        .upsert({
-          provider,
-          encrypted_key: encryptedData,
-          created_by: userId,
-          is_active: true
-        }, {
-          onConflict: 'provider'
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      console.log(`✅ ${provider} API key stored successfully`)
-      return { success: true, data }
-    } catch (error) {
-      console.error(`Failed to store ${provider} API key:`, error)
-      return { success: false, error: error.message }
+  async getApiKey(provider) {
+    // Check cache first
+    if (this.apiKeys[provider] && this.lastFetch && (Date.now() - this.lastFetch < this.cacheTimeout)) {
+      return this.apiKeys[provider]
     }
-  }
 
-  /**
-   * Supabase에서 API 키를 가져와서 복호화
-   */
-  async getAPIKey(provider) {
     try {
-      // Supabase에서 암호화된 키 가져오기
-      const { data, error } = await supabase
+      // Fetch from Supabase
+      const { data, error } = await this.supabase
         .from('api_keys')
-        .select('encrypted_key, is_active')
+        .select('encrypted_key')
         .eq('provider', provider)
         .eq('is_active', true)
         .single()
 
       if (error || !data) {
-        console.log(`No active API key found for ${provider}`)
+        console.error(`Failed to fetch ${provider} API key:`, error?.message)
+        // Fallback to environment variable
+        const envKey = process.env[`${provider.toUpperCase()}_API_KEY`]
+        if (envKey) {
+          console.log(`Using ${provider} API key from environment variable`)
+          return envKey
+        }
         return null
       }
 
-      // 복호화
-      const decryptedKey = this.encryptionManager.decrypt(data.encrypted_key)
+      // Decrypt the API key
+      const encryptedData = JSON.parse(data.encrypted_key)
+      const decryptedKey = this.encryptionManager.decrypt(encryptedData)
       
-      // 사용 횟수 업데이트
-      await this.updateUsageCount(provider)
+      // Cache the key
+      this.apiKeys[provider] = decryptedKey
+      this.lastFetch = Date.now()
       
+      console.log(`Successfully retrieved ${provider} API key from Supabase`)
       return decryptedKey
-    } catch (error) {
-      console.error(`Failed to get ${provider} API key:`, error)
+    } catch (err) {
+      console.error(`Error getting ${provider} API key:`, err.message)
+      // Fallback to environment variable
+      const envKey = process.env[`${provider.toUpperCase()}_API_KEY`]
+      if (envKey) {
+        console.log(`Using ${provider} API key from environment variable (fallback)`)
+        return envKey
+      }
       return null
     }
   }
 
-  /**
-   * 모든 활성 API 키 상태 확인
-   */
-  async getAllAPIKeyStatus() {
+  async incrementUsage(provider) {
     try {
-      const { data, error } = await supabase
-        .from('api_keys')
-        .select('provider, is_active, last_used, usage_count, created_at')
-        .order('provider')
-
-      if (error) throw error
-
-      return data.map(key => ({
-        provider: key.provider,
-        isActive: key.is_active,
-        hasKey: true,
-        lastUsed: key.last_used,
-        usageCount: key.usage_count,
-        createdAt: key.created_at
-      }))
-    } catch (error) {
-      console.error('Failed to get API key status:', error)
-      return []
-    }
-  }
-
-  /**
-   * API 키 사용 횟수 업데이트
-   */
-  async updateUsageCount(provider) {
-    try {
-      const { error } = await supabase.rpc('increment', {
-        table_name: 'api_keys',
-        column_name: 'usage_count',
-        row_id: provider,
-        id_column: 'provider'
-      })
-
-      if (!error) {
-        await supabase
+      const { error } = await this.supabase
+        .rpc('increment_api_usage', { provider_name: provider })
+      
+      if (error) {
+        // If RPC doesn't exist, try direct update
+        await this.supabase
           .from('api_keys')
-          .update({ last_used: new Date().toISOString() })
+          .update({ usage_count: this.supabase.raw('usage_count + 1') })
           .eq('provider', provider)
       }
-    } catch (error) {
-      console.error(`Failed to update usage count for ${provider}:`, error)
+    } catch (err) {
+      console.error(`Failed to increment usage for ${provider}:`, err.message)
     }
   }
 
-  /**
-   * API 사용 로그 기록
-   */
-  async logAPIUsage(provider, userId, tokensUsed, costEstimate, requestType, success = true, errorMessage = null) {
-    try {
-      const { error } = await supabase
-        .from('api_key_usage_logs')
-        .insert({
-          provider,
-          user_id: userId,
-          tokens_used: tokensUsed,
-          cost_estimate: costEstimate,
-          request_type: requestType,
-          success,
-          error_message: errorMessage
-        })
-
-      if (error) throw error
-    } catch (error) {
-      console.error('Failed to log API usage:', error)
-    }
-  }
-
-  /**
-   * API 키 비활성화
-   */
-  async deactivateAPIKey(provider) {
-    try {
-      const { error } = await supabase
-        .from('api_keys')
-        .update({ is_active: false })
-        .eq('provider', provider)
-
-      if (error) throw error
-      
-      console.log(`✅ ${provider} API key deactivated`)
-      return { success: true }
-    } catch (error) {
-      console.error(`Failed to deactivate ${provider} API key:`, error)
-      return { success: false, error: error.message }
-    }
+  clearCache() {
+    this.apiKeys = {}
+    this.lastFetch = null
   }
 }
 
-// Supabase RPC 함수 생성 (increment 함수가 없는 경우)
-export async function createIncrementFunction() {
-  const query = `
-    CREATE OR REPLACE FUNCTION increment(table_name text, column_name text, row_id text, id_column text)
-    RETURNS void AS $$
-    BEGIN
-      EXECUTE format('UPDATE %I SET %I = %I + 1 WHERE %I = %L', 
-        table_name, column_name, column_name, id_column, row_id);
-    END;
-    $$ LANGUAGE plpgsql SECURITY DEFINER;
-  `
-  
-  const { error } = await supabase.rpc('query', { query })
-  if (error) console.error('Failed to create increment function:', error)
-}
-
-export default APIKeyService
+export default new APIKeyService()

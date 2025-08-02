@@ -12,8 +12,8 @@ const API_URL = import.meta.env?.VITE_API_URL ||
     : 'https://wonbyte-pro.onrender.com')
 
 // Supabase Configuration
-const SUPABASE_URL = 'https://xrjrddwrsasjifhghzfl.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyanJkZHdyc2FzamlmaGdoemZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTg1NTIsImV4cCI6MjA2Nzk5NDU1Mn0.pAqrS-9NYXiUZ1lONXlDm8YK-c3zhZj2VIix0_Q36rw'
+const SUPABASE_URL = 'https://jqlouemxgafrbzdxyojl.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxbG91ZW14Z2FmcmJ6ZHh5b2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMDE5ODgsImV4cCI6MjA2OTY3Nzk4OH0.lzd76e3ZeH5eq33G6V6FMbs5lDToV9tGDUIilAVDPYI'
 
 // GitHub Pages Configuration
 const GITHUB_PAGES_BASENAME = '/'

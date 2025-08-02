@@ -77,18 +77,22 @@ export default function ReadingTrainerPage() {
       const topic = selectedTopic === 'custom' ? customTopic : selectedTopic
       const length = selectedLength === 'custom' ? customLength : selectedLength
       
+      // 학년을 나이로 변환
+      const gradeInfo = GRADE_OPTIONS.find(grade => grade.value === selectedGrade)
+      const targetAge = gradeInfo ? gradeInfo.age : 10
+      
       const prompt = `${topic}에 대한 ${selectedGrade} 수준의 한국어 읽기 지문을 ${length}자로 작성해주세요.`
       
       const response = await generateTextApi({
         provider: selectedProvider,
         contentType: 'reading',
-        prompt,
-        targetAge: selectedGrade,
+        prompt: topic,
+        targetAge: targetAge,
         difficulty: 'intermediate',
-        contentLength: length
+        contentLength: parseInt(length)
       })
       
-      setGeneratedText(response.content.mainContent.introduction || response.content)
+      setGeneratedText(typeof response.content === 'string' ? response.content : response.content.mainContent?.introduction || response.content)
       setStep(2)
     } catch (error) {
       console.error('지문 생성 오류:', error)
