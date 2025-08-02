@@ -24,19 +24,48 @@ const supabase = createClient(
 // Initialize Supabase Service
 const supabaseService = new SupabaseService()
 
-// Middleware
-app.use(helmet())
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://wonbyte-pro-app.vercel.app',
-        'https://onbyte-print.netlify.app', 
-        'https://edutext-pro.netlify.app', 
-        'https://onbyte-print-frontend.onrender.com',
-        'https://mingukang0719.github.io'
-      ] 
-    : true, // 개발 환경에서는 모든 오리진 허용
-  credentials: true
+// CORS configuration - MUST come before other middleware
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://wonbyte-pro-app.vercel.app',
+      'https://wonbyte-pro.vercel.app',
+      'https://onbyte-print.netlify.app', 
+      'https://edutext-pro.netlify.app', 
+      'https://onbyte-print-frontend.onrender.com',
+      'https://mingukang0719.github.io'
+    ]
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || process.env.NODE_ENV !== 'production') {
+      return callback(null, true)
+    }
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      console.log('CORS blocked origin:', origin)
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id']
+}
+
+app.use(cors(corsOptions))
+
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Origin: ${req.headers.origin}`)
+  next()
+})
+
+// Helmet configuration - configured to work with CORS
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false
 }))
 
 // Rate limiting
@@ -49,6 +78,15 @@ app.use('/api/', limiter)
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
+
+// Handle preflight requests for all routes
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin)
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.header('Access-Control-Allow-Credentials', 'true')
+  res.sendStatus(200)
+})
 
 // Health check endpoint with Supabase status
 app.get('/api/health', async (req, res) => {
