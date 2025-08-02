@@ -2,7 +2,7 @@
   "name": "edutext-pro-backend",
   "version": "1.0.0",
   "description": "EduText Pro Backend API Server",
-  "main": "server.js",
+  "main": "newServer.js",
   "type": "module",
   "scripts": {
     "start": "node newServer.js",
