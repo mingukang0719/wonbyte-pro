@@ -64,30 +64,8 @@ class AIService {
     } catch (error) {
       console.error('AI Service Error:', error)
       
-      // Failed to fetch 오류 또는 네트워크 오류 발생 시 자동으로 데모 데이터 반환
-      if (error.message.includes('Failed to fetch') || 
-          error.name === 'NetworkError' || 
-          error.name === 'TypeError') {
-        console.log(`${request.provider} fetch failed, falling back to demo data`)
-        const fallbackResult = await this.demoService.generateContent(
-          request.provider || 'claude',
-          request.contentType || 'reading',
-          request.prompt,
-          {
-            targetAge: request.targetAge,
-            difficulty: request.difficulty,
-            contentLength: request.contentLength
-          }
-        )
-        
-        // fallback이 성공했으면 에러를 throw하지 않음
-        if (fallbackResult && fallbackResult.success) {
-          console.log('Fallback data generated successfully')
-          return fallbackResult
-        }
-      }
-      
-      throw error
+      // AI 생성 실패 시 에러를 사용자에게 표시하고 재시도 유도
+      throw new Error(`AI 콘텐츠 생성에 실패했습니다. 잠시 후 다시 시도해주세요. (${error.message})`)
     }
   }
 
@@ -168,21 +146,8 @@ class AIService {
     } catch (error) {
       console.error('Vocabulary Extraction Error:', error)
       
-      // Failed to fetch 오류 또는 네트워크 오류 발생 시 자동으로 데모 데이터 반환
-      if (error.message.includes('Failed to fetch') || 
-          error.name === 'NetworkError' || 
-          error.name === 'TypeError') {
-        console.log('Vocabulary extraction fetch failed, falling back to demo data')
-        const fallbackResult = this.mockExtractVocabulary(text, count)
-        
-        // fallback이 성공했으면 에러를 throw하지 않음
-        if (fallbackResult && fallbackResult.success) {
-          console.log('Fallback vocabulary data generated successfully')
-          return fallbackResult
-        }
-      }
-      
-      throw error
+      // AI 어휘 추출 실패 시 에러를 사용자에게 표시
+      throw new Error(`어휘 추출에 실패했습니다. 잠시 후 다시 시도해주세요. (${error.message})`)
     }
   }
 
@@ -224,21 +189,8 @@ class AIService {
     } catch (error) {
       console.error('Problem Generation Error:', error)
       
-      // Failed to fetch 오류 또는 네트워크 오류 발생 시 자동으로 데모 데이터 반환
-      if (error.message.includes('Failed to fetch') || 
-          error.name === 'NetworkError' || 
-          error.name === 'TypeError') {
-        console.log('Problem generation fetch failed, falling back to demo data')
-        const fallbackResult = this.mockGenerateProblems(text, problemType, count)
-        
-        // fallback이 성공했으면 에러를 throw하지 않음
-        if (fallbackResult && fallbackResult.success) {
-          console.log('Fallback problem data generated successfully')
-          return fallbackResult
-        }
-      }
-      
-      throw error
+      // AI 문제 생성 실패 시 에러를 사용자에게 표시
+      throw new Error(`문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요. (${error.message})`)
     }
   }
 

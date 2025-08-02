@@ -63,11 +63,15 @@ router.post('/generate', async (req, res) => {
 
 // PDF 다운로드 엔드포인트
 router.get('/download/:filename', async (req, res) => {
+  console.log('PDF download endpoint hit with filename:', req.params.filename)
   try {
     const { filename } = req.params
     
+    console.log('PDF download request for:', filename)
+    
     // 보안을 위한 파일명 검증
     if (!filename || filename.includes('..') || !filename.endsWith('.html')) {
+      console.error('Invalid filename for download:', filename)
       return res.status(400).json({
         success: false,
         error: 'Invalid filename'
@@ -76,6 +80,7 @@ router.get('/download/:filename', async (req, res) => {
 
     // 실제로는 임시 파일 저장소나 메모리 캐시에서 가져와야 함
     // 현재는 클라이언트에서 직접 HTML을 받아서 처리하도록 안내
+    console.log('Direct download not supported, redirecting to print function')
     res.json({
       success: false,
       error: 'Direct download not implemented',

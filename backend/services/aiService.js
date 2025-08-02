@@ -73,9 +73,15 @@ class AIService {
           keyEnd: finalClaudeKey.substring(finalClaudeKey.length - 10)
         })
         
-        this.claude = new Anthropic({
-          apiKey: finalClaudeKey
-        })
+        try {
+          this.claude = new Anthropic({
+            apiKey: finalClaudeKey
+          })
+          console.log('Claude client initialized successfully')
+        } catch (error) {
+          console.error('Failed to initialize Claude client:', error)
+          this.claude = null
+        }
       }
 
       this.initialized = true
@@ -231,10 +237,9 @@ class AIService {
 
   async generateWithOpenAI(prompt) {
     try {
-      // API 키가 없거나 초기화되지 않은 경우만 모의 응답 제공
+      // API 키가 없으면 오류 발생
       if (!this.openaiKey) {
-        console.log('OpenAI: No valid API key, using mock response')
-        return this.getMockResponse('openai', prompt)
+        throw new Error('OpenAI API 키가 설정되지 않았습니다. 환경변수에서 OPENAI_API_KEY를 확인해주세요.')
       }
       
       console.log('OpenAI: Using real API with key:', this.openaiKey.substring(0, 10) + '...')
@@ -292,10 +297,9 @@ class AIService {
 
   async generateWithGemini(prompt) {
     try {
-      // Gemini 클라이언트가 초기화되지 않은 경우만 모의 응답 제공
+      // Gemini 클라이언트가 초기화되지 않은 경우 오류 발생
       if (!this.gemini || !this.geminiModel) {
-        console.log('Gemini: Client not initialized, using mock response')
-        return this.getMockResponse('gemini', prompt)
+        throw new Error('Gemini API 키가 설정되지 않았습니다. 환경변수에서 GEMINI_API_KEY를 확인해주세요.')
       }
       
       console.log('Gemini: Using real API with initialized client')
@@ -327,46 +331,14 @@ class AIService {
 
   async generateWithClaude(prompt) {
     try {
-      // Temporary: Always use mock response for Claude until API key issue is resolved
-      console.log('Claude: Using mock response due to API key formatting issues')
-      return this.getMockResponse('claude', prompt)
-
-      // Claude 클라이언트가 초기화되지 않은 경우만 모의 응답 제공
+      // Claude 클라이언트가 초기화되지 않은 경우 오류 발생
       if (!this.claude) {
-        console.log('Claude: Client not initialized, using mock response')
-        return this.getMockResponse('claude', prompt)
+        throw new Error('Claude API 키가 설정되지 않았습니다. 환경변수에서 CLAUDE_API_KEY를 확인해주세요.')
       }
       
       console.log('Claude: Using real API with initialized client')
 
-      // Ultra-aggressive key cleaning at the last moment
-      const rawKey = process.env.CLAUDE_API_KEY
-      console.log('Claude raw key debug:', {
-        originalLength: rawKey?.length,
-        hasNewlines: rawKey?.includes('\n'),
-        hasSpaces: rawKey?.includes(' '),
-        firstChars: rawKey?.substring(0, 20)
-      })
-
-      // Create a fresh Claude client with ultra-cleaned key
-      const ultraCleanKey = rawKey
-        ? rawKey.toString().replace(/[\s\r\n\t\u0000-\u001F\u007F-\u009F]/g, '')
-        : null
-
-      console.log('Claude ultra-clean key:', {
-        cleanedLength: ultraCleanKey?.length,
-        cleanedStart: ultraCleanKey?.substring(0, 20)
-      })
-
-      if (!ultraCleanKey) {
-        throw new Error('No valid Claude API key after cleaning')
-      }
-
-      const freshClaude = new (await import('@anthropic-ai/sdk')).default({
-        apiKey: ultraCleanKey
-      })
-
-      const message = await freshClaude.messages.create({
+      const message = await this.claude.messages.create({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4096,
         temperature: 0.7,
@@ -383,6 +355,7 @@ class AIService {
       try {
         parsedContent = JSON.parse(text)
       } catch (parseError) {
+        console.log('Claude response is not JSON, parsing as unstructured text')
         parsedContent = this.parseUnstructuredText(text)
       }
 
@@ -751,243 +724,6 @@ ${this.getJsonFormat(contentType)}
     return status
   }
 
-  // 모의 응답 생성 (API 키가 없을 때 사용)
-  getMockResponse(provider, prompt) {
-    console.log(`Mock response for ${provider} with prompt: ${prompt}`)
-    
-    const isReading = prompt.includes('읽기 지문') || prompt.includes('지문을')
-    const isAnalysis = prompt.includes('분석할 지문') || prompt.includes('난이도를 분석')
-    const isVocabularyExtraction = prompt.includes('어려울 만한 핵심 어휘') || prompt.includes('어휘 5개를 추출')
-    const isReadingProblems = prompt.includes('문해력 훈련 문제') || prompt.includes('문제 5개를 생성')
-    const isVocabulary = prompt.includes('어휘') || prompt.includes('vocabulary')
-    const isQuestions = prompt.includes('문제') || prompt.includes('questions')
-    const isAnswers = prompt.includes('해설') || prompt.includes('answers')
-
-    let mockContent
-
-    if (isAnalysis) {
-      mockContent = {
-        title: "문해력 난이도 분석 결과",
-        analysis: {
-          textLength: "7",
-          vocabularyLevel: "6",
-          sentenceComplexity: "5", 
-          contentLevel: "7",
-          backgroundKnowledge: "6",
-          totalScore: "6.2"
-        },
-        feedback: "이 지문은 해당 학년 수준에 적절한 난이도를 가지고 있습니다. 어휘 수준이 다소 높은 편이므로 사전 어휘 학습을 통해 보완하면 좋겠습니다.",
-        recommendations: [
-          "핵심 어휘를 미리 학습한 후 지문을 읽도록 지도",
-          "문단별로 나누어 단계적으로 읽기 지도",
-          "내용과 관련된 배경지식을 먼저 설명"
-        ]
-      }
-    } else if (isVocabularyExtraction) {
-      mockContent = {
-        title: "어휘 분석 결과",
-        vocabularyList: [
-          {
-            word: "관찰",
-            meaning: "자세히 살펴보는 것",
-            etymology: "觀(볼 관) + 察(살필 찰)",
-            synonyms: ["구경", "살피기"],
-            antonyms: ["무시", "소홀"],
-            difficulty: "★★★☆☆",
-            example: "과학자는 현미경으로 세포를 관찰했습니다.",
-            gradeAppropriate: true
-          },
-          {
-            word: "발전",
-            meaning: "더 나은 상태로 나아가는 것",
-            etymology: "發(발할 발) + 展(펼 전)",
-            synonyms: ["성장", "진보"],
-            antonyms: ["퇴보", "후퇴"],
-            difficulty: "★★☆☆☆",
-            example: "기술의 발전으로 우리 생활이 편리해졌습니다.",
-            gradeAppropriate: true
-          },
-          {
-            word: "환경",
-            meaning: "주변을 둘러싸고 있는 모든 조건",
-            etymology: "環(고리 환) + 境(경계 경)",
-            synonyms: ["주변", "여건"],
-            antonyms: [],
-            difficulty: "★★★☆☆",
-            example: "깨끗한 환경을 만들기 위해 쓰레기를 분리수거해야 합니다.",
-            gradeAppropriate: true
-          },
-          {
-            word: "중요",
-            meaning: "매우 필요하고 소중한 것",
-            etymology: "重(무거울 중) + 要(요할 요)",
-            synonyms: ["소중", "필수"],
-            antonyms: ["불필요", "하찮음"],
-            difficulty: "★★☆☆☆",
-            example: "건강은 무엇보다 중요합니다.",
-            gradeAppropriate: true
-          },
-          {
-            word: "노력",
-            meaning: "목표를 이루기 위해 힘쓰는 것",
-            etymology: "努(힘쓸 노) + 力(힘 력)",
-            synonyms: ["애쓰기", "힘쓰기"],
-            antonyms: ["게으름", "나태"],
-            difficulty: "★★☆☆☆",
-            example: "꾸준한 노력으로 실력이 늘었습니다.",
-            gradeAppropriate: true
-          }
-        ]
-      }
-    } else if (isReadingProblems) {
-      mockContent = {
-        title: "문해력 문제",
-        problems: [
-          {
-            type: "multiple_choice",
-            question: "이 글의 주제로 가장 적절한 것은?",
-            options: ["환경 보호의 중요성", "기술 발전의 문제점", "교육의 필요성", "건강한 생활 습관"],
-            correctAnswer: 0,
-            explanation: "글 전체에서 환경을 보호해야 한다는 내용이 반복적으로 나타나므로 주제는 '환경 보호의 중요성'입니다."
-          },
-          {
-            type: "multiple_choice",
-            question: "글에서 '관찰'의 의미로 가장 적절한 것은?",
-            options: ["대충 보기", "자세히 살펴보기", "빨리 훑어보기", "멀리서 보기"],
-            correctAnswer: 1,
-            explanation: "'관찰'은 어떤 대상을 자세히 살펴보고 연구하는 행위를 의미합니다."
-          },
-          {
-            type: "multiple_choice",
-            question: "글의 내용과 일치하지 않는 것은?",
-            options: ["환경 보호가 필요하다", "기술이 발전하고 있다", "모든 기술은 나쁘다", "우리의 노력이 중요하다"],
-            correctAnswer: 2,
-            explanation: "글에서는 기술 발전 자체를 부정적으로 보지 않으며, 오히려 환경을 위해 활용해야 한다고 말하고 있습니다."
-          },
-          {
-            type: "short_answer",
-            question: "환경을 보호하기 위해 우리가 할 수 있는 일을 두 가지 쓰시오.",
-            expectedLength: "1-2문장",
-            sampleAnswer: "쓰레기 분리수거를 하고, 일회용품 사용을 줄인다.",
-            gradingCriteria: ["환경 보호와 관련된 구체적인 행동 제시", "두 가지 이상의 방법 언급"],
-            explanation: "환경 보호를 위한 실천 방안으로는 재활용, 에너지 절약, 대중교통 이용 등이 있습니다."
-          },
-          {
-            type: "short_answer",
-            question: "글쓴이가 이 글을 쓴 목적을 한 문장으로 쓰시오.",
-            expectedLength: "1문장",
-            sampleAnswer: "환경 보호의 중요성을 알리고 실천을 당부하기 위해서이다.",
-            gradingCriteria: ["글의 주제와 목적 파악", "명확한 문장으로 표현"],
-            explanation: "글 전체의 흐름을 보면 환경 문제의 심각성을 제시하고 해결을 위한 실천을 강조하고 있습니다."
-          }
-        ]
-      }
-    } else if (isReading) {
-      // Extract topic from prompt for smarter mock responses
-      let topic = "일반 주제"
-      let title = "샘플 지문"
-      let content = "이것은 API 키가 설정되지 않아 생성된 샘플 지문입니다."
-      
-      // Try to extract topic from prompt patterns
-      const topicMatch = prompt.match(/(.+?)에 대한.*지문/);
-      if (topicMatch) {
-        topic = topicMatch[1].trim();
-        
-        // Generate topic-appropriate sample content
-        if (topic.includes('로봇') || topic.includes('인공지능') || topic.includes('AI')) {
-          title = "로봇과 인공지능"
-          content = "요즘 우리 주변에서 로봇을 많이 볼 수 있습니다. 청소 로봇은 집안을 깨끗하게 치워주고, 음성 인식 기기는 우리가 하는 말을 알아듣고 답해줍니다. 인공지능은 컴퓨터가 사람처럼 생각하고 배울 수 있게 하는 기술입니다. 병원에서는 의사가 병을 진단할 때 도움을 주고, 자동차는 스스로 운전할 수 있게 됩니다. 하지만 로봇과 인공지능은 사람을 대신하는 것이 아니라 우리를 도와주는 친구입니다. 앞으로 더 똑똑해진 로봇들이 우리 생활을 더욱 편리하게 만들어 줄 것입니다. 우리도 새로운 기술을 배우고 잘 활용해야 합니다."
-        } else if (topic.includes('동물') || topic.includes('자연')) {
-          title = "동물과 자연"
-          content = "숲속에는 많은 동물들이 살고 있습니다. 다람쥐는 나무 위에서 도토리를 모으고, 토끼는 풀밭에서 뛰어놉니다. 새들은 하늘을 자유롭게 날아다니며 아름다운 노래를 부릅니다. 동물들은 각자 다른 모습과 특징을 가지고 있어요. 사자는 힘이 세고, 치타는 빠르게 달릴 수 있습니다. 코끼리는 크고, 개미는 작지만 모두 소중한 생명입니다. 우리는 동물들과 자연을 보호해야 합니다. 쓰레기를 함부로 버리지 않고, 동물들의 집을 지켜주어야 해요."
-        } else if (topic.includes('포켓몬') || topic.includes('Pokemon')) {
-          title = "포켓몬스터"
-          content = "포켓몬스터는 전 세계 어린이들이 좋아하는 캐릭터들입니다. 피카츄는 가장 유명한 포켓몬으로 노란색 몸에 빨간 볼을 가지고 있어요. 포켓몬들은 각각 다른 능력을 가지고 있습니다. 물 타입, 불 타입, 풀 타입 등 여러 종류가 있어요. 포켓몬 트레이너는 포켓몬들과 친구가 되어 함께 모험을 떠납니다. 포켓몬들을 돌보고 사랑하는 것이 가장 중요합니다. 우리도 동물이나 친구들을 아끼고 보살펴야 해요."
-        } else {
-          title = topic
-          content = `${topic}는 정말 흥미로운 주제입니다. 이 주제에 대해 더 많은 것을 배워보면 좋겠어요. ${topic}에 관련된 다양한 이야기들이 있습니다. 우리 주변에서도 ${topic}와 관련된 것들을 찾아볼 수 있어요. 새로운 것을 배우는 것은 언제나 즐거운 일입니다. ${topic}에 대해 더 알아보고 싶다면 책을 읽거나 어른들께 물어보세요.`
-        }
-      }
-      
-      mockContent = {
-        title: title,
-        description: `${topic}에 대한 읽기 지문`,
-        mainContent: {
-          introduction: content,
-          keyPoints: [
-            "봄에는 여러 가지 꽃들이 핀다",
-            "꽃마다 색깔과 모양이 다르다", 
-            "꽃은 생명이므로 소중히 여겨야 한다"
-          ],
-          examples: [
-            {
-              korean: "개나리가 노랗게 피었어요.",
-              explanation: "봄에 가장 먼저 피는 노란 꽃"
-            }
-          ]
-        }
-      }
-    } else if (isVocabulary) {
-      mockContent = {
-        title: "어휘 분석 결과",
-        vocabularyList: [
-          {
-            word: "관찰",
-            meaning: "자세히 살펴보는 것",
-            synonyms: ["구경", "살피기"],
-            antonyms: ["무시", "소홀"],
-            difficulty: "★★★☆☆",
-            example: "꽃을 관찰해보세요."
-          },
-          {
-            word: "생명",
-            meaning: "살아있는 것",
-            synonyms: ["목숨", "삶"],
-            antonyms: ["죽음"],
-            difficulty: "★★☆☆☆", 
-            example: "꽃도 생명이에요."
-          }
-        ]
-      }
-    } else if (isQuestions) {
-      mockContent = {
-        title: "서술형 문제",
-        questions: [
-          {
-            type: "내용 이해형",
-            question: "봄에 피는 꽃의 종류를 3가지 써보세요.",
-            answerSpace: 3,
-            points: 10
-          },
-          {
-            type: "맥락 추론형", 
-            question: "글쓴이가 꽃을 꺾지 말라고 하는 이유를 써보세요.",
-            answerSpace: 4,
-            points: 15
-          }
-        ]
-      }
-    } else if (isAnswers) {
-      mockContent = {
-        title: "문제 해설",
-        answers: [
-          {
-            questionNumber: 1,
-            correctAnswer: "개나리, 진달래, 벚꽃",
-            explanation: "지문에서 봄에 피는 꽃으로 개나리(노란색), 진달래(분홍색), 벚꽃(하얀색, 분홍색)을 제시했습니다.",
-            gradingCriteria: ["3가지 꽃 이름 정확히 쓰기", "맞춤법 정확성"],
-            tips: "지문을 차근차근 읽으며 꽃 이름을 찾아보세요."
-          }
-        ]
-      }
-    }
-
-    return {
-      content: mockContent,
-      provider: provider,
-      tokensUsed: 100
-    }
-  }
 }
 
 export default AIService
