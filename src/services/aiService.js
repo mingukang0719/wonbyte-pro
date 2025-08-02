@@ -1,16 +1,30 @@
 // Frontend AI Service
 import { config } from '../config'
 import DemoService from './demoService'
+import ClientAIService from './clientAIService'
+import { hasApiKeys } from '../config/apiKeys'
 
 class AIService {
   constructor() {
     this.baseURL = config.apiUrl
     this.demoService = new DemoService()
+    this.clientAIService = ClientAIService
     this.isDemo = config.demo || config.apiUrl === 'demo'
+    this.useClientAI = hasApiKeys() && !this.baseURL.includes('localhost')
   }
 
   async generateContent(request) {
     try {
+      // 클라이언트 AI 사용 가능한 경우
+      if (this.useClientAI) {
+        if (request.contentType === 'reading') {
+          const topic = request.prompt.match(/(.+)에 대한/)?.[1] || '주제'
+          const length = request.contentLength || 800
+          return await this.clientAIService.generateReadingText(topic, request.targetAge, length, request.provider)
+        }
+        return await this.clientAIService.generateContent(request)
+      }
+      
       // 데모 모드인 경우 데모 서비스 사용
       if (this.isDemo) {
         // 데모 모드: 모의 AI 응답 사용
@@ -55,6 +69,10 @@ class AIService {
   // 문해력 분석
   async analyzeReadingLevel(text, gradeLevel) {
     try {
+      if (this.useClientAI) {
+        return await this.clientAIService.analyzeReadingLevel(text, gradeLevel)
+      }
+
       const request = {
         contentType: 'analysis',
         text: text,
@@ -77,6 +95,10 @@ class AIService {
   // 어휘 추출 및 분석
   async extractVocabulary(text, gradeLevel, count = 20) {
     try {
+      if (this.useClientAI) {
+        return await this.clientAIService.extractVocabulary(text, gradeLevel, count)
+      }
+
       const request = {
         contentType: 'vocabulary_extraction',
         text: text,
@@ -99,6 +121,10 @@ class AIService {
   // 문해력 훈련 문제 생성
   async generateReadingProblems(text, problemType, count) {
     try {
+      if (this.useClientAI) {
+        return await this.clientAIService.generateProblems(text, problemType, count)
+      }
+
       const request = {
         contentType: 'reading_problems',
         text: text,

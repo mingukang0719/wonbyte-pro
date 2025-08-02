@@ -164,3 +164,9 @@ vite.config.ts.timestamp-*
 
 # Sensitive files
 set-render-env.js
+
+# Environment variables
+.env
+.env.local
+.env.production.local
+.env.development.local

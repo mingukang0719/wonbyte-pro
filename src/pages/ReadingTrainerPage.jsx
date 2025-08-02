@@ -67,7 +67,7 @@ export default function ReadingTrainerPage() {
       const prompt = `${topic}에 대한 ${selectedGrade} 수준의 한국어 읽기 지문을 ${length}자로 작성해주세요.`
       
       const response = await generateTextApi({
-        provider: 'claude',
+        provider: 'gemini',
         contentType: 'reading',
         prompt,
         targetAge: selectedGrade,
