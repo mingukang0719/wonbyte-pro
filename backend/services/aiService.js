@@ -16,6 +16,15 @@ class AIService {
 
   async initialize() {
     try {
+      // Debug: Log raw environment variables
+      console.log('Raw environment variables:', {
+        claudeKeyRaw: process.env.CLAUDE_API_KEY ? `"${process.env.CLAUDE_API_KEY}"` : 'not set',
+        claudeKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
+        claudeKeyCharCodes: process.env.CLAUDE_API_KEY ? 
+          Array.from(process.env.CLAUDE_API_KEY.slice(0, 20)).map(c => c.charCodeAt(0)) : 
+          'not set'
+      })
+
       // Supabase에서 API 키 가져오기
       const [openaiKey, claudeKey, geminiKey] = await Promise.all([
         this.apiKeyService.getAPIKey('openai'),
@@ -75,7 +84,21 @@ class AIService {
     if (!key) return null
     
     // Clean and trim the key to remove any whitespace, newlines, or invalid characters
-    const cleanedKey = key.toString().trim().replace(/[\r\n\t\s]/g, '')
+    // This handles all forms of whitespace including non-breaking spaces and other Unicode whitespace
+    let cleanedKey = key.toString()
+      .trim()
+      .replace(/[\r\n\t\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, '')
+      .replace(/[^\x20-\x7E]/g, '') // Remove non-printable ASCII characters
+    
+    // Additional cleaning for any remaining problematic characters
+    cleanedKey = cleanedKey.replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+    
+    console.log('Key cleaning debug:', {
+      originalLength: key.length,
+      cleanedLength: cleanedKey.length,
+      original: `"${key}"`,
+      cleaned: `"${cleanedKey}"`
+    })
     
     if (!cleanedKey) return null
     
