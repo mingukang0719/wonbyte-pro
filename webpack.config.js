@@ -12,7 +12,7 @@ module.exports = (env, argv) => {
       path: path.resolve(__dirname, 'dist'),
       filename: isProduction ? '[name].[contenthash].js' : '[name].js',
       clean: true,
-      publicPath: isProduction ? '/edutext-pro-korean-learning/' : '/',
+      publicPath: '/',
     },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],

@@ -12,7 +12,7 @@ const SUPABASE_URL = 'https://xrjrddwrsasjifhghzfl.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyanJkZHdyc2FzamlmaGdoemZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTg1NTIsImV4cCI6MjA2Nzk5NDU1Mn0.pAqrS-9NYXiUZ1lONXlDm8YK-c3zhZj2VIix0_Q36rw'
 
 // GitHub Pages Configuration
-const GITHUB_PAGES_BASENAME = isProduction ? '/edutext-pro-korean-learning' : '/'
+const GITHUB_PAGES_BASENAME = '/'
 
 export const config = {
   // Environment
