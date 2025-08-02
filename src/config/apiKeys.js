@@ -1,9 +1,18 @@
 // API Keys configuration
 // These should be set via environment variables
 
+// Safely access environment variables
+const getEnvVar = (key) => {
+  try {
+    return import.meta.env?.[key] || ''
+  } catch {
+    return ''
+  }
+}
+
 export const apiKeys = {
-  openai: import.meta.env.VITE_OPENAI_API_KEY || '',
-  anthropic: import.meta.env.VITE_ANTHROPIC_API_KEY || ''
+  openai: getEnvVar('VITE_OPENAI_API_KEY'),
+  anthropic: getEnvVar('VITE_ANTHROPIC_API_KEY')
 }
 
 // Check if at least one API key is configured
