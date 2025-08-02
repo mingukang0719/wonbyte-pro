@@ -120,82 +120,7 @@ app.get('/api/health', async (req, res) => {
   }
 })
 
-// AI Content Generation endpoint
-app.post('/api/ai/generate', async (req, res) => {
-  try {
-    const { 
-      provider = 'gemini',
-      contentType = 'reading',
-      difficulty = 'intermediate', 
-      targetAge = 'elem4',
-      contentLength = '800',
-      prompt,
-      userId 
-    } = req.body
-
-    if (!prompt) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Prompt is required' 
-      })
-    }
-
-    console.log('AI Generation Request:', {
-      provider,
-      contentType,
-      difficulty,
-      targetAge,
-      contentLength,
-      promptLength: prompt.length
-    })
-
-    // AI 서비스 동적 import (실제 구현에서는 상단에서 import)
-    const AIService = (await import('./services/aiService.js')).default
-    const aiService = new AIService()
-
-    const result = await aiService.generateContent({
-      provider,
-      contentType,
-      difficulty,
-      targetAge,
-      contentLength,
-      prompt,
-      userId
-    })
-
-    // Supabase에 생성 로그 저장
-    if (result.success && userId) {
-      try {
-        await supabaseService.logAIGeneration(
-          userId,
-          provider,
-          contentType,
-          prompt,
-          result.content,
-          {
-            targetAge,
-            difficulty,
-            contentLength,
-            tokensUsed: result.tokensUsed
-          }
-        )
-      } catch (logError) {
-        console.error('Failed to log AI generation:', logError)
-        // 로깅 실패는 치명적이지 않으므로 계속 진행
-      }
-    }
-
-    res.json(result)
-
-  } catch (error) {
-    console.error('AI Generation error:', error)
-    res.status(500).json({ 
-      success: false,
-      error: 'AI 콘텐츠 생성에 실패했습니다',
-      message: error.message 
-    })
-  }
-})
+// AI Content Generation endpoint is now handled by aiGenerationRoutes
 
 // AI Provider Status endpoint
 app.get('/api/ai/status', async (req, res) => {
@@ -408,40 +333,7 @@ app.get('/api/pdf/download/:fileName', async (req, res) => {
   }
 })
 
-// Legacy generate endpoint (for backward compatibility)
-app.post('/api/generate', async (req, res) => {
-  try {
-    const { text, userId } = req.body
-
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' })
-    }
-
-    // 기본 샘플 콘텐츠 반환
-    const generatedContent = `생성된 교육 콘텐츠: ${text}에 대한 상세한 설명과 예시들...
-
-주요 개념:
-1. 기본 원리 설명
-2. 실제 적용 사례
-3. 연습 문제와 해답
-4. 추가 학습 자료
-
-이 내용은 샘플 콘텐츠입니다. AI 생성을 위해서는 /api/ai/generate를 사용하세요.`
-
-    res.json({
-      success: true,
-      generatedContent,
-      timestamp: new Date().toISOString()
-    })
-
-  } catch (error) {
-    console.error('Generation error:', error)
-    res.status(500).json({ 
-      error: 'Content generation failed',
-      message: error.message 
-    })
-  }
-})
+// Legacy generate endpoint removed - use /api/ai/generate instead
 
 // Template management routes
 app.use('/api/admin/templates', templateRoutes)

@@ -34,7 +34,7 @@ export default function ReadingTrainerPage() {
   const [selectedGrade, setSelectedGrade] = useState('elem4')
   const [selectedLength, setSelectedLength] = useState('800')
   const [customLength, setCustomLength] = useState('')
-  const [selectedProvider, setSelectedProvider] = useState('openai')
+  const [selectedProvider, setSelectedProvider] = useState('claude')
   
   // 사용 가능한 AI 제공자
   const availableProviders = getAvailableProviders()
