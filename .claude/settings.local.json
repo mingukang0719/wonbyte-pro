@@ -63,7 +63,9 @@
       "Bash(dir netlify.toml)",
       "Bash(npx netlify-cli deploy:*)",
       "Bash(npx netlify-cli:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "mcp__supabase-mcp__execute_sql",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": []
   }

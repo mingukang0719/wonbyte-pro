@@ -2,6 +2,11 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -61,6 +66,13 @@ module.exports = (env, argv) => {
       ],
     },
     plugins: [
+      new webpack.DefinePlugin({
+        'import.meta.env': JSON.stringify({
+          VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || '',
+          VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || '',
+          VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+        }),
+      }),
       new HtmlWebpackPlugin({
         template: './index.html',
         inject: true,
