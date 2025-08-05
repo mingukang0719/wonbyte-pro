@@ -71,7 +71,6 @@ export default function ReadingTrainerPage() {
   const [vocabularyProblems, setVocabularyProblems] = useState([])
   const [readingProblems, setReadingProblems] = useState([])
   const [generatedProblems, setGeneratedProblems] = useState([])
-  const [selectedProblemCount] = useState({ vocabulary: 10, reading: 5 })
   
   // 어휘 관련 상태
   const [selectedVocabulary, setSelectedVocabulary] = useState([])
@@ -87,7 +86,6 @@ export default function ReadingTrainerPage() {
     useCallback((params) => aiService.generateContent(params), [])
   )
   
-  const { executeAll: generateProblemsApi, loading: generatingProblems } = useParallelApiCalls()
   
   // AI 지문 생성
   const handleGenerateText = useCallback(async () => {
@@ -135,6 +133,11 @@ export default function ReadingTrainerPage() {
   // 문제 변경 핸들러
   const handleProblemsChange = useCallback((problemsList) => {
     setGeneratedProblems(problemsList)
+    // ProblemGenerator에서 생성한 문제를 타입별로 분류
+    const vocabProblems = problemsList.filter(p => p.type === 'objective' && p.category === 'vocabulary')
+    const readProblems = problemsList.filter(p => p.type === 'objective' && p.category !== 'vocabulary')
+    setVocabularyProblems(vocabProblems)
+    setReadingProblems(readProblems)
   }, [])
   
   // 지문 편집 핸들러
@@ -199,70 +202,6 @@ export default function ReadingTrainerPage() {
     }
   }
   
-  // 문제 생성 (병렬 처리)
-  const generateProblems = useCallback(async () => {
-    setErrorMessage(null)
-    try {
-      const textToAnalyze = mode === 'generate' ? generatedText : userText
-      
-      // 병렬로 문제 생성
-      const results = await generateProblemsApi([
-        aiService.generateReadingProblems(
-          textToAnalyze, 
-          'vocabulary', 
-          selectedProblemCount.vocabulary
-        ),
-        aiService.generateReadingProblems(
-          textToAnalyze, 
-          'comprehension', 
-          selectedProblemCount.reading
-        )
-      ])
-      
-      if (results.success.length > 0) {
-        // 성공한 결과 처리
-        results.success.forEach((response, index) => {
-          if (response.success) {
-            if (index === 0) {
-              setVocabularyProblems(response.content.problems)
-            } else {
-              setReadingProblems(response.content.problems)
-            }
-          }
-        })
-      }
-      
-      // 실패한 것이 있으면 샘플 문제로 대체
-      if (results.hasErrors) {
-        if (!vocabularyProblems.length) {
-          setVocabularyProblems([
-            {
-              id: 1,
-              word: '예시단어',
-              question: '"예시단어"의 의미로 가장 적절한 것은?',
-              options: ['의미1', '의미2', '의미3', '의미4'],
-              answer: 0
-            }
-          ])
-        }
-        if (!readingProblems.length) {
-          setReadingProblems([
-            {
-              id: 1,
-              question: '이 글의 중심 내용은 무엇입니까?',
-              options: ['선택지1', '선택지2', '선택지3', '선택지4'],
-              answer: 0
-            }
-          ])
-        }
-      }
-      
-      setStep(3)
-    } catch (error) {
-      console.error('문제 생성 오류:', error)
-      setErrorMessage('문제 생성 중 오류가 발생했습니다')
-    }
-  }, [mode, generatedText, userText, selectedProblemCount, generateProblemsApi, vocabularyProblems, readingProblems])
   
   // PDF 다운로드 처리
   const handlePDFDownload = useCallback(async () => {
@@ -282,9 +221,7 @@ export default function ReadingTrainerPage() {
           text: textToExport,
           analysisResult,
           selectedVocabulary: selectedVocabulary.filter(word => word.isChecked || word.selected),
-          generatedProblems,
-          vocabularyProblems,
-          readingProblems
+          generatedProblems
         })
       })
 
@@ -311,7 +248,7 @@ export default function ReadingTrainerPage() {
       console.error('PDF 생성 오류:', error)
       setErrorMessage(`PDF 생성 중 오류가 발생했습니다: ${error.message}`)
     }
-  }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, generatedProblems, vocabularyProblems, readingProblems])
+  }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, generatedProblems])
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -819,24 +756,26 @@ export default function ReadingTrainerPage() {
             {/* 다음 단계 버튼 */}
             <div className="flex justify-between">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => {
+                  setStep(1)
+                  setGeneratedProblems([])
+                }}
                 className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
               >
                 이전 단계
               </button>
               <button
-                onClick={generateProblems}
-                disabled={generatingProblems}
+                onClick={() => {
+                  if (generatedProblems.length > 0) {
+                    setStep(3)
+                  } else {
+                    alert('먼저 문제를 생성해주세요.')
+                  }
+                }}
+                disabled={generatedProblems.length === 0}
                 className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {generatingProblems ? (
-                  <span className="flex items-center">
-                    <RefreshCw className="animate-spin mr-2" />
-                    문제 생성 중...
-                  </span>
-                ) : (
-                  '문제 생성하기'
-                )}
+                문제 풀기 시작
               </button>
             </div>
           </div>
@@ -847,33 +786,24 @@ export default function ReadingTrainerPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-6">문해력 훈련 문제</h2>
             
-            {/* 어휘 문제 */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">어휘 이해 문제</h3>
-              {vocabularyProblems.map((problem, index) => (
+            {/* 생성된 문제 표시 */}
+            <div className="space-y-4">
+              {generatedProblems.map((problem, index) => (
                 <ProblemCard 
-                  key={problem.id}
+                  key={problem.id || `problem_${index}`}
                   problem={problem}
                   index={index}
-                  type="vocab"
+                  type={problem.category === 'vocabulary' ? 'vocab' : 'reading'}
                   context={mode === 'generate' ? generatedText : userText}
                 />
               ))}
             </div>
-
-            {/* 독해 문제 */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">독해 이해 문제</h3>
-              {readingProblems.map((problem, index) => (
-                <ProblemCard 
-                  key={problem.id}
-                  problem={problem}
-                  index={index}
-                  type="reading"
-                  context={mode === 'generate' ? generatedText : userText}
-                />
-              ))}
-            </div>
+            
+            {generatedProblems.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                문제가 아직 생성되지 않았습니다.
+              </div>
+            )}
 
             {/* PDF 다운로드 버튼 */}
             <div className="flex justify-between">
