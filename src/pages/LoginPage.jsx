@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../contexts/AuthContext'
-import { Mail, Lock, LogIn, AlertCircle, Loader2 } from 'lucide-react'
+import { User, Lock, LogIn, AlertCircle, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const { signIn, isAuthenticated, profile } = useAuth()
@@ -39,13 +39,13 @@ export default function LoginPage() {
 
     try {
       const { error } = await signIn({
-        email: data.email,
+        username: data.username,
         password: data.password
       })
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('이메일 또는 비밀번호가 올바르지 않습니다.')
+        if (error.message.includes('Invalid login credentials') || typeof error === 'string') {
+          setError(typeof error === 'string' ? error : '아이디 또는 비밀번호가 올바르지 않습니다.')
         } else if (error.message.includes('Email not confirmed')) {
           setError('이메일 인증이 필요합니다. 이메일을 확인해주세요.')
         } else {
@@ -107,31 +107,35 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* 이메일 입력 */}
+            {/* 아이디 입력 */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                이메일
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                아이디
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  id="email"
-                  type="email"
-                  {...register('email', {
-                    required: '이메일을 입력해주세요.',
+                  id="username"
+                  type="text"
+                  {...register('username', {
+                    required: '아이디를 입력해주세요.',
                     pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: '올바른 이메일 형식이 아닙니다.'
+                      value: /^[a-zA-Z0-9_]+$/,
+                      message: '아이디는 영문, 숫자, 언더스코어(_)만 사용 가능합니다.'
+                    },
+                    minLength: {
+                      value: 3,
+                      message: '아이디는 3자 이상이어야 합니다.'
                     }
                   })}
                   className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
+                    errors.username ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="your@email.com"
+                  placeholder="영문 아이디"
                 />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              {errors.username && (
+                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
               )}
             </div>
 

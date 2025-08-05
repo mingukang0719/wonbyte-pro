@@ -7,6 +7,7 @@ import SignupPage from './pages/SignupPage'
 import StudentDashboardPage from './pages/StudentDashboardPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import CreateAssignmentPage from './pages/admin/CreateAssignmentPage'
+import SystemManagePage from './pages/admin/SystemManagePage'
 import ReadingTrainerPage from './pages/ReadingTrainerPage'
 import PrivateRoute from './components/auth/PrivateRoute'
 
@@ -38,6 +39,11 @@ function App() {
             <Route path="/admin/assignments/new" element={
               <PrivateRoute allowedRoles={['teacher', 'parent', 'admin']}>
                 <CreateAssignmentPage />
+              </PrivateRoute>
+            } />
+            <Route path="/admin/system" element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <SystemManagePage />
               </PrivateRoute>
             } />
             

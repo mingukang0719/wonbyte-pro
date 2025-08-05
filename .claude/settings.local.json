@@ -65,7 +65,11 @@
       "Bash(npx netlify-cli:*)",
       "Bash(dir:*)",
       "mcp__supabase-mcp__execute_sql",
-      "WebFetch(domain:supabase.com)"
+      "WebFetch(domain:supabase.com)",
+      "Bash(netlify env:set:*)",
+      "Bash(netlify:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }

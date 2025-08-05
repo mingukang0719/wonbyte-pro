@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../services/supabaseClient'
+import { signUp as customSignUp, signIn as customSignIn, signOut as customSignOut, getCurrentUser } from '../services/customAuth'
 import { useNavigate } from 'react-router-dom'
 
 const AuthContext = createContext({})
@@ -21,30 +22,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // 현재 세션 확인
     checkSession()
-
-    // 인증 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN') {
-          setUser(session.user)
-          await fetchProfile(session.user.id)
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setProfile(null)
-          navigate('/login')
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
   }, [])
 
   const checkSession = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setUser(session.user)
-        await fetchProfile(session.user.id)
+      const { user: currentUser } = await getCurrentUser()
+      if (currentUser) {
+        setUser(currentUser)
+        setProfile(currentUser)
       }
     } catch (error) {
       console.error('Session check error:', error)
@@ -73,53 +58,41 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (formData) => {
     try {
-      // 1. Supabase Auth에 사용자 생성
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
+      const { user, error } = await customSignUp({
+        username: formData.username,
         password: formData.password,
-        options: {
-          data: {
-            full_name: formData.full_name
-          }
-        }
+        email: formData.email,
+        fullName: formData.full_name,
+        role: formData.role || 'student',
+        gradeLevel: formData.grade_level,
+        schoolName: formData.school_name,
+        phoneNumber: formData.phone_number
       })
 
-      if (authError) throw authError
+      if (error) throw error
 
-      // 2. profiles 테이블에 추가 정보 저장
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email: formData.email,
-            full_name: formData.full_name,
-            role: formData.role || 'student',
-            grade_level: formData.grade_level,
-            school_name: formData.school_name,
-            phone_number: formData.phone_number
-          })
-
-        if (profileError) throw profileError
-      }
-
-      return { data: authData, error: null }
+      return { data: user, error: null }
     } catch (error) {
       console.error('Signup error:', error)
       return { data: null, error }
     }
   }
 
-  const signIn = async ({ email, password }) => {
+  const signIn = async ({ username, password }) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+      const { user, session, error } = await customSignIn({
+        username,
         password
       })
 
       if (error) throw error
 
-      return { data, error: null }
+      if (user) {
+        setUser(user)
+        setProfile(user)
+      }
+
+      return { data: { user, session }, error: null }
     } catch (error) {
       console.error('Login error:', error)
       return { data: null, error }
@@ -128,7 +101,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
+      const { error } = await customSignOut()
       if (error) throw error
       
       setUser(null)

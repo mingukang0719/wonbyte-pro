@@ -53,7 +53,8 @@ export default function SignupPage() {
 
     try {
       const signupData = {
-        email: data.email,
+        username: data.username,
+        email: data.email || null,
         password: data.password,
         full_name: data.full_name,
         role: role,
@@ -94,8 +95,8 @@ export default function SignupPage() {
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">회원가입 완료!</h2>
           <p className="text-gray-600 mb-4">
-            인증 이메일이 발송되었습니다.<br />
-            이메일을 확인한 후 로그인해주세요.
+            회원가입이 완료되었습니다.<br />
+            이제 로그인하실 수 있습니다.
           </p>
           <Link
             to="/login"
@@ -170,10 +171,46 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* 이메일 (아이디) */}
+            {/* 아이디 */}
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                아이디
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="username"
+                  type="text"
+                  {...register('username', {
+                    required: '아이디를 입력해주세요.',
+                    pattern: {
+                      value: /^[a-zA-Z0-9_]+$/,
+                      message: '아이디는 영문, 숫자, 언더스코어(_)만 사용 가능합니다.'
+                    },
+                    minLength: {
+                      value: 3,
+                      message: '아이디는 3자 이상이어야 합니다.'
+                    },
+                    maxLength: {
+                      value: 20,
+                      message: '아이디는 20자 이하여야 합니다.'
+                    }
+                  })}
+                  className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.username ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="영문 아이디"
+                />
+              </div>
+              {errors.username && (
+                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+              )}
+            </div>
+
+            {/* 이메일 (선택사항) */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                이메일 (아이디)
+                이메일 <span className="text-gray-400 text-xs">(선택사항)</span>
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -181,7 +218,6 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   {...register('email', {
-                    required: '이메일을 입력해주세요.',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: '올바른 이메일 형식이 아닙니다.'
@@ -190,7 +226,7 @@ export default function SignupPage() {
                   className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.email ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="your@email.com"
+                  placeholder="your@email.com (선택사항)"
                 />
               </div>
               {errors.email && (
