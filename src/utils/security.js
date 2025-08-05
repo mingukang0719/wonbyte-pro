@@ -8,8 +8,8 @@ export const isAllowedEnvironment = () => {
   const allowedHosts = [
     'localhost',
     '127.0.0.1',
-    'wonbyte-pro.vercel.app',
-    'wonbyte-pro-git-main-mingukang0719s-projects.vercel.app'
+    'extraordinary-bublanina-2886c0.netlify.app',
+    'wonbyte-pro.netlify.app' // 커스텀 도메인 추가 시 사용
   ]
   
   return allowedHosts.some(host => hostname.includes(host))

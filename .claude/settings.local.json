@@ -62,7 +62,8 @@
       "Bash(ls:*)",
       "Bash(dir netlify.toml)",
       "Bash(npx netlify-cli deploy:*)",
-      "Bash(npx netlify-cli:*)"
+      "Bash(npx netlify-cli:*)",
+      "Bash(dir:*)"
     ],
     "deny": []
   }

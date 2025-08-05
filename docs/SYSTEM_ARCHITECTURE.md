@@ -480,7 +480,7 @@ class PDFGenerator {
 ### 7.1 프로덕션 환경
 
 ```
-Frontend (Netlify/Vercel)
+Frontend (Netlify)
 ├── React App (정적 호스팅)
 ├── CDN (이미지, 폰트)
 └── 환경별 설정

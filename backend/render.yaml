@@ -26,4 +26,4 @@ services:
       - key: API_KEY_ENCRYPTION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://wonbyte-pro.vercel.app
+        value: https://extraordinary-bublanina-2886c0.netlify.app

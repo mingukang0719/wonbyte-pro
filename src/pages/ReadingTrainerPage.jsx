@@ -514,7 +514,7 @@ export default function ReadingTrainerPage() {
                       <li>• Anthropic Claude API 키: <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://console.anthropic.com/</a></li>
                     </ul>
                     <p className="text-sm text-gray-600 mt-2">
-                      Vercel 환경 변수에 VITE_OPENAI_API_KEY 또는 VITE_ANTHROPIC_API_KEY를 추가해주세요.
+                      Netlify 환경 변수에 VITE_OPENAI_API_KEY 또는 VITE_ANTHROPIC_API_KEY를 추가해주세요.
                     </p>
                   </div>
                 )}

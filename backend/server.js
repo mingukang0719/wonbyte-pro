@@ -18,7 +18,8 @@ const PORT = process.env.PORT || 3001
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      'https://wonbyte-pro.vercel.app',
+      'https://extraordinary-bublanina-2886c0.netlify.app',
+      'https://wonbyte-pro.netlify.app', // 커스텀 도메인 추가 시 사용
       'http://localhost:3000',
       'http://localhost:5173',
       'http://127.0.0.1:5173'
