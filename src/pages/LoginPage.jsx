@@ -10,6 +10,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
+  // Supabase 환경 변수 체크
+  const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+  
   const {
     register,
     handleSubmit,
@@ -55,6 +58,31 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // 환경 변수가 설정되지 않은 경우 안내 메시지 표시
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-red-50 border-2 border-red-200 rounded-lg p-8">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-red-800 text-center mb-4">환경 변수 설정 필요</h2>
+          <p className="text-red-700 text-center mb-4">
+            Supabase 환경 변수가 설정되지 않았습니다.
+          </p>
+          <div className="bg-white rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-700 mb-2">Netlify에서 다음 환경 변수를 설정해주세요:</p>
+            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+              <li>VITE_SUPABASE_URL</li>
+              <li>VITE_SUPABASE_ANON_KEY</li>
+            </ul>
+          </div>
+          <p className="text-sm text-gray-600 text-center">
+            Site configuration → Environment variables에서 설정 가능합니다.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
