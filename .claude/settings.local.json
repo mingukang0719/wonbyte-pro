@@ -60,7 +60,9 @@
       "Bash(mkdir:*)",
       "Bash(npm search:*)",
       "Bash(ls:*)",
-      "Bash(dir netlify.toml)"
+      "Bash(dir netlify.toml)",
+      "Bash(npx netlify-cli deploy:*)",
+      "Bash(npx netlify-cli:*)"
     ],
     "deny": []
   }

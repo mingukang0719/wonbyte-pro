@@ -70,6 +70,12 @@ module.exports = (env, argv) => {
             new MiniCssExtractPlugin({
               filename: '[name].[contenthash].css',
             }),
+            new CopyWebpackPlugin({
+              patterns: [
+                { from: '_redirects', to: '_redirects', noErrorOnMissing: true },
+                { from: 'public/_headers', to: '_headers', noErrorOnMissing: true },
+              ],
+            }),
           ]
         : []),
     ],
