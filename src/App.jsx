@@ -9,6 +9,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage'
 import CreateAssignmentPage from './pages/admin/CreateAssignmentPage'
 import SystemManagePage from './pages/admin/SystemManagePage'
 import ReadingTrainerPage from './pages/ReadingTrainerPage'
+import TestPage from './pages/TestPage'
 import PrivateRoute from './components/auth/PrivateRoute'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/test" element={<TestPage />} />
             
             {/* Student routes */}
             <Route path="/student/dashboard" element={
@@ -41,7 +43,8 @@ function App() {
                 <CreateAssignmentPage />
               </PrivateRoute>
             } />
-            <Route path="/admin/system" element={
+            <Route path="/admin/system" element={<SystemManagePage />} />
+            <Route path="/admin/system-protected" element={
               <PrivateRoute allowedRoles={['admin']}>
                 <SystemManagePage />
               </PrivateRoute>
