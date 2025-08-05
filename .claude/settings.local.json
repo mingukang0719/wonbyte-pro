@@ -58,7 +58,9 @@
       "Bash(npm install:*)",
       "Bash(git tag:*)",
       "Bash(mkdir:*)",
-      "Bash(npm search:*)"
+      "Bash(npm search:*)",
+      "Bash(ls:*)",
+      "Bash(dir netlify.toml)"
     ],
     "deny": []
   }

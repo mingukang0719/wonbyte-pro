@@ -1,11 +1,58 @@
+# Netlify deployment configuration for Wonbyte Pro
 [build]
-  publish = "dist"
+  # Build command for the frontend
   command = "npm run build"
+  
+  # Directory to deploy (where the built files are)
+  publish = "dist"
 
+# Node version for builds
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect all routes to index.html for SPA routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[build.environment]
-  NODE_VERSION = "18"
+# API proxy configuration for backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://wonbyte-pro-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Production context environment variables
+[context.production.environment]
+  NODE_ENV = "production"
