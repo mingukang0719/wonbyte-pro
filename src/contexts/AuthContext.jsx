@@ -25,16 +25,22 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const checkSession = async () => {
+    console.log('AuthContext: Checking session...')
     try {
       const { user: currentUser } = await getCurrentUser()
+      console.log('AuthContext: getCurrentUser result:', currentUser)
       if (currentUser) {
         setUser(currentUser)
         setProfile(currentUser)
+        console.log('AuthContext: User set successfully')
+      } else {
+        console.log('AuthContext: No user found')
       }
     } catch (error) {
       console.error('Session check error:', error)
     } finally {
       setLoading(false)
+      console.log('AuthContext: Loading set to false')
     }
   }
 

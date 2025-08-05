@@ -69,7 +69,9 @@
       "Bash(netlify env:set:*)",
       "Bash(netlify:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(npm run preview:*)",
+      "mcp__playwright__browser_network_requests"
     ],
     "deny": []
   }

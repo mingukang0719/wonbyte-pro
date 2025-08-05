@@ -6,8 +6,17 @@ export default function PrivateRoute({ children, allowedRoles = [] }) {
   const { user, profile, loading } = useAuth()
   const location = useLocation()
 
+  console.log('PrivateRoute: State check', {
+    loading,
+    user,
+    profile,
+    allowedRoles,
+    currentPath: location.pathname
+  })
+
   // 로딩 중일 때
   if (loading) {
+    console.log('PrivateRoute: Loading state')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
@@ -17,11 +26,13 @@ export default function PrivateRoute({ children, allowedRoles = [] }) {
 
   // 로그인하지 않은 경우
   if (!user) {
+    console.log('PrivateRoute: No user, redirecting to login')
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
   // 프로필 로딩 중일 때
   if (!profile) {
+    console.log('PrivateRoute: No profile yet')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
@@ -44,5 +55,6 @@ export default function PrivateRoute({ children, allowedRoles = [] }) {
     return <Navigate to="/unauthorized" replace />
   }
 
+  console.log('PrivateRoute: All checks passed, rendering children')
   return children
 }
