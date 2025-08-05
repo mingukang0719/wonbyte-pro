@@ -27,7 +27,7 @@ export default function ProblemGenerator({ text, gradeLevel, onProblemsChange })
     setError(null)
 
     try {
-      const response = await aiService.generateReadingProblems(text, 'mixed', 5)
+      const response = await aiService.generateReadingProblems(text, 'mixed', 5, gradeLevel)
       
       // Handle both old and new API response formats
       let problemsData = null

@@ -462,8 +462,13 @@ class AIService {
 **추출 기준**:
 - 해당 학년에게 다소 어려울 수 있는 핵심 어휘
 - 교육적 가치가 있는 중요한 단어
-- 한자어는 어원을 활용한 쉬운 설명
-- 일상에서 활용 가능한 실용적 어휘`
+- 한자어는 어원을 활용한 쉬운 설명 (단, 외래어나 고유어는 한자 표기 금지)
+- 일상에서 활용 가능한 실용적 어휘
+
+**중요 주의사항**:
+- 외래어(예: 컴퓨터, 인터넷, 프로그램, 시스템, 데이터 등)는 etymology 필드를 비워두세요
+- 순우리말(예: 하늘, 바람, 마음 등)도 etymology 필드를 비워두세요
+- 오직 한자어인 경우에만 한자 어원을 표기하세요`
     } else if (contentType === 'reading_problems') {
       enhancedPrompt = `${basePrompts[contentType]}
 
@@ -543,12 +548,12 @@ ${this.getJsonFormat(contentType)}
   "vocabularyList": [
     {
       "word": "어휘",
-      "meaning": "한자어 기반 쉬운 풀이",
-      "etymology": "한자어 어원 (있는 경우)",
+      "meaning": "쉽고 명확한 의미 설명",
+      "etymology": "한자어인 경우만 표기 (예: 觀(볼 관) + 察(살필 찰)), 외래어나 고유어는 빈 문자열 ''",
       "synonyms": ["유의어1", "유의어2"],
       "antonyms": ["반의어1", "반의어2"],
       "difficulty": "★★★☆☆",
-      "example": "예문",
+      "example": "실제 사용 예문",
       "gradeAppropriate": true
     }
   ]
