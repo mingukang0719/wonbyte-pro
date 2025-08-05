@@ -394,7 +394,7 @@ export default function EditorPage() {
       })
       
       setGeneratedContent(result.content)
-      console.log('생성된 콘텐츠:', result)
+      // Content generated successfully
       
       // 성공 후 UI 업데이트
       setAiPrompt('')
@@ -740,7 +740,7 @@ export default function EditorPage() {
                 <button
                   onClick={() => {
                     // 선택된 어휘들을 페이지에 추가하는 로직
-                    console.log('선택된 어휘:', selectedVocabulary)
+                    // Selected vocabulary will be added to page
                     setShowVocabularyPanel(false)
                   }}
                   disabled={selectedVocabulary.length === 0}
@@ -801,7 +801,7 @@ export default function EditorPage() {
                   <button
                     onClick={() => {
                       // 선택된 문제들을 페이지에 추가하는 로직
-                      console.log('선택된 문제:', selectedQuestions)
+                      // Selected questions will be added to page
                       setShowQuestionPanel(false)
                     }}
                     disabled={selectedQuestions.length === 0}

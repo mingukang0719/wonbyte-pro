@@ -57,7 +57,8 @@
       "Bash(npm run lint)",
       "Bash(npm install:*)",
       "Bash(git tag:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm search:*)"
     ],
     "deny": []
   }

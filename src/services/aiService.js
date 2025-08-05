@@ -13,7 +13,7 @@ class AIService {
     this.isDemo = false // Force disable demo mode
     // 항상 백엔드 API 사용하도록 변경 (클라이언트 직접 호출 비활성화)
     this.useClientAI = false
-    console.log('AIService Constructor - FORCED baseURL:', this.baseURL)
+    // Service initialized with backend URL
   }
 
   async generateContent(request) {
@@ -44,10 +44,7 @@ class AIService {
       }
 
       const url = `${this.baseURL}/api/ai/generate`
-      console.log('AI Service - Base URL:', this.baseURL)
-      console.log('AI Service - Full URL:', url)
-      console.log('AI Service - Request:', request)
-      console.log('AI Service - Timestamp:', new Date().toISOString())
+      // Making API request to backend
       
       const response = await fetch(url, {
         method: 'POST',

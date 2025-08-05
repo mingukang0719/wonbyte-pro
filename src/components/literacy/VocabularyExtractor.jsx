@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { Plus, BookOpen, Check, X, Edit3, Save, RotateCcw, Sparkles, Star } from 'lucide-react'
 import aiService from '../../services/aiService'
+import { VocabularyManager, LearningStatsManager } from '../../utils/storage'
 
 /**
  * 별표 난이도 표시 컴포넌트
@@ -284,11 +285,31 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
         <div className="flex items-center">
           <BookOpen className="w-6 h-6 text-blue-600 mr-2" />
           <h3 className="text-lg font-semibold text-gray-900">핵심 어휘 분석</h3>
-          {selectedCount > 0 && (
-            <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
-              {selectedCount}개 선택됨
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {selectedCount > 0 && (
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                {selectedCount}개 선택됨
+              </span>
+            )}
+            {vocabularyList.length > 0 && (
+              <button
+                onClick={() => {
+                  const selectedWords = vocabularyList.filter(word => word.isChecked || word.selected)
+                  selectedWords.forEach(word => {
+                    VocabularyManager.addVocabulary(word)
+                  })
+                  LearningStatsManager.updateStats({
+                    vocabularyLearned: selectedWords.length
+                  })
+                  alert(`${selectedWords.length}개의 어휘가 저장되었습니다!`)
+                }}
+                className="px-3 py-1 bg-purple-600 text-white text-sm font-medium rounded-full hover:bg-purple-700 transition-colors flex items-center"
+              >
+                <Save className="w-4 h-4 mr-1" />
+                어휘 저장
+              </button>
+            )}
+          </div>
         </div>
         
         <button

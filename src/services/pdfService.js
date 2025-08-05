@@ -173,7 +173,7 @@ class PDFService {
   <script>
     // 인쇄 완료 후 처리
     window.addEventListener('afterprint', function() {
-      console.log('인쇄 완료');
+      // Print completed
     });
 
     // 키보드 단축키

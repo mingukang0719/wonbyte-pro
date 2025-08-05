@@ -6,11 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "start:old": "node server.js",
-    "start:simple": "node simpleServer.js",
-    "dev": "nodemon newServer.js",
+    "dev": "nodemon server.js",
     "build": "echo 'Backend build completed'",
-    "test": "node testLocal.js",
     "validate-env": "node validateEnv.js"
   },
   "dependencies": {

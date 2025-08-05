@@ -7,7 +7,13 @@ import {
   Download,
   ArrowRight,
   RefreshCw,
-  Globe
+  Globe,
+  BarChart3,
+  BookMarked,
+  Brain,
+  AlertCircle,
+  User,
+  Trophy
 } from 'lucide-react'
 import aiService from '../services/aiService'
 import { config } from '../config'
@@ -23,10 +29,24 @@ import ProblemCard from '../components/literacy/ProblemCard'
 import TextDisplay from '../components/literacy/TextDisplay'
 import VocabularyExtractor from '../components/literacy/VocabularyExtractor'
 import ProblemGenerator from '../components/literacy/ProblemGenerator'
+import LearningStats from '../components/stats/LearningStats'
+import VocabularyReview from '../components/vocabulary/VocabularyReview'
+import BookmarkManager from '../components/bookmarks/BookmarkManager'
+import WrongAnswerNote from '../components/wronganswers/WrongAnswerNote'
+import UserProfile from '../components/profile/UserProfile'
+import GameDashboard from '../components/gamification/GameDashboard'
 
 export default function ReadingTrainerPage() {
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
   const [step, setStep] = useState(1) // 1: 설정, 2: 지문, 3: 문제
+  
+  // 새로운 기능 모달 상태
+  const [showStats, setShowStats] = useState(false)
+  const [showVocabularyReview, setShowVocabularyReview] = useState(false)
+  const [showBookmarks, setShowBookmarks] = useState(false)
+  const [showWrongAnswers, setShowWrongAnswers] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [showGameDashboard, setShowGameDashboard] = useState(false)
   
   // 지문 생성 설정
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -305,6 +325,57 @@ export default function ReadingTrainerPage() {
               <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
                 문해력 훈련
               </span>
+            </div>
+            
+            {/* 새로운 기능 버튼들 */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowStats(true)}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="학습 통계"
+              >
+                <BarChart3 className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => setShowVocabularyReview(true)}
+                className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                title="어휘 복습"
+              >
+                <Brain className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => setShowBookmarks(true)}
+                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                title="북마크"
+              >
+                <BookMarked className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => setShowWrongAnswers(true)}
+                className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="오답노트"
+              >
+                <AlertCircle className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => setShowGameDashboard(true)}
+                className="p-2 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                title="게임"
+              >
+                <Trophy className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => setShowProfile(true)}
+                className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                title="프로필"
+              >
+                <User className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -704,6 +775,7 @@ export default function ReadingTrainerPage() {
               showCharCount={true}
               editable={true}
               onTextChange={handleTextEdit}
+              gradeLevel={selectedGrade}
             />
 
             {/* 문해력 분석 */}
@@ -784,6 +856,7 @@ export default function ReadingTrainerPage() {
                   problem={problem}
                   index={index}
                   type="vocab"
+                  context={mode === 'generate' ? generatedText : userText}
                 />
               ))}
             </div>
@@ -797,6 +870,7 @@ export default function ReadingTrainerPage() {
                   problem={problem}
                   index={index}
                   type="reading"
+                  context={mode === 'generate' ? generatedText : userText}
                 />
               ))}
             </div>
@@ -820,6 +894,73 @@ export default function ReadingTrainerPage() {
           </div>
         )}
       </main>
+      
+      {/* 학습 통계 */}
+      {showStats && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl max-w-4xl w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">학습 통계</h2>
+              <button
+                onClick={() => setShowStats(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <LearningStats />
+          </div>
+        </div>
+      )}
+      
+      {/* 어휘 복습 */}
+      {showVocabularyReview && (
+        <VocabularyReview onClose={() => setShowVocabularyReview(false)} />
+      )}
+      
+      {/* 북마크 관리 */}
+      {showBookmarks && (
+        <BookmarkManager 
+          onClose={() => setShowBookmarks(false)}
+          onSelectBookmark={(bookmark) => {
+            // 북마크된 텍스트를 로드
+            setUserText(bookmark.content)
+            setSelectedGrade(bookmark.gradeLevel)
+            setMode('input')
+            setStep(2)
+            setShowBookmarks(false)
+          }}
+        />
+      )}
+      
+      {/* 오답노트 */}
+      {showWrongAnswers && (
+        <WrongAnswerNote 
+          onClose={() => setShowWrongAnswers(false)}
+          onSelectProblem={(problem) => {
+            // 선택한 문제와 관련된 액션
+            setShowWrongAnswers(false)
+          }}
+        />
+      )}
+      
+      {/* 사용자 프로필 */}
+      {showProfile && (
+        <UserProfile 
+          onClose={() => setShowProfile(false)}
+          onProfileUpdate={(profile) => {
+            // 프로필 업데이트 시 학년 설정 반영
+            if (profile.gradeLevel) {
+              setSelectedGrade(profile.gradeLevel)
+            }
+          }}
+        />
+      )}
+      
+      {/* 게임 대시보드 */}
+      {showGameDashboard && (
+        <GameDashboard onClose={() => setShowGameDashboard(false)} />
+      )}
     </div>
   )
 }

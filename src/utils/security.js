@@ -76,7 +76,5 @@ export const logApiUsage = (provider, success, error = null) => {
   }
   
   // In production, you might want to send this to an analytics service
-  if (process.env.NODE_ENV === 'development') {
-    console.log('API Usage:', usage)
-  }
+  // API usage is tracked but not logged in production
 }

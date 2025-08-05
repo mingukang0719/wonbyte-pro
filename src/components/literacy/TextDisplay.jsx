@@ -1,5 +1,7 @@
 import React, { memo, useMemo } from 'react'
+import { Bookmark } from 'lucide-react'
 import EditableText from '../common/EditableText'
+import { BookmarkManager } from '../../utils/storage'
 
 /**
  * 텍스트 표시 컴포넌트 (메모이제이션 + 편집 기능)
@@ -16,7 +18,8 @@ const TextDisplay = memo(function TextDisplay({
   showCharCount = true,
   className = '',
   editable = false,
-  onTextChange
+  onTextChange,
+  gradeLevel = 'elem4'
 }) {
   // 글자 수 계산 (메모이제이션)
   const charCount = useMemo(() => text.length, [text])
@@ -27,9 +30,29 @@ const TextDisplay = memo(function TextDisplay({
     return sentences.length
   }, [text])
 
+  const handleBookmark = () => {
+    BookmarkManager.addBookmark({
+      content: text,
+      gradeLevel: gradeLevel,
+      title: title
+    })
+    alert('북마크에 저장되었습니다!')
+  }
+
   return (
     <div className={`mb-6 ${className}`}>
-      <h3 className="text-lg font-semibold mb-3">{title}</h3>
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        {text && text.length > 100 && (
+          <button
+            onClick={handleBookmark}
+            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+            title="북마크에 저장"
+          >
+            <Bookmark className="w-5 h-5" />
+          </button>
+        )}
+      </div>
       <div className="bg-gray-50 rounded-lg">
         {editable ? (
           <EditableText
