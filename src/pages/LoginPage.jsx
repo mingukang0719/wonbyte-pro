@@ -44,9 +44,11 @@ export default function LoginPage() {
       })
 
       if (error) {
-        if (error.message.includes('Invalid login credentials') || typeof error === 'string') {
-          setError(typeof error === 'string' ? error : '아이디 또는 비밀번호가 올바르지 않습니다.')
-        } else if (error.message.includes('Email not confirmed')) {
+        if (typeof error === 'string') {
+          setError(error)
+        } else if (error.message && error.message.includes('Invalid login credentials')) {
+          setError('아이디 또는 비밀번호가 올바르지 않습니다.')
+        } else if (error.message && error.message.includes('Email not confirmed')) {
           setError('이메일 인증이 필요합니다. 이메일을 확인해주세요.')
         } else {
           setError('로그인 중 오류가 발생했습니다.')

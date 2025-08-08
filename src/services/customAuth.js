@@ -1,11 +1,20 @@
 import { supabase } from './supabaseClient'
-import bcrypt from 'bcryptjs'
+
+// 브라우저에서 사용 가능한 간단한 해시 함수 (실제 운영환경에서는 더 안전한 방법 사용 필요)
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
 
 // 사용자 등록
 export async function signUp({ username, password, email, fullName, role, gradeLevel, schoolName, phoneNumber }) {
   try {
     // 비밀번호 해시
-    const passwordHash = await bcrypt.hash(password, 10)
+    const passwordHash = await hashPassword(password)
     
     // user_auth 테이블에 삽입
     const { data: authData, error: authError } = await supabase
@@ -64,8 +73,8 @@ export async function signIn({ username, password }) {
     }
     
     // 비밀번호 확인
-    const isValid = await bcrypt.compare(password, authData.password_hash)
-    if (!isValid) {
+    const passwordHash = await hashPassword(password)
+    if (passwordHash !== authData.password_hash) {
       return { user: null, session: null, error: '아이디 또는 비밀번호가 올바르지 않습니다.' }
     }
     

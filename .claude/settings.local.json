@@ -72,7 +72,8 @@
       "mcp__context7__get-library-docs",
       "Bash(npm run preview:*)",
       "mcp__playwright__browser_network_requests",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "mcp__playwright__browser_select_option"
     ],
     "deny": []
   }

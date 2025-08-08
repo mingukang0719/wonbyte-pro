@@ -34,10 +34,10 @@ export default function HomePage() {
                 학습자료 제작
               </Link>
               <Link 
-                to="/admin/login" 
+                to="/login" 
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
-                관리자
+                로그인
               </Link>
               <Link
                 to="/reading-trainer"
