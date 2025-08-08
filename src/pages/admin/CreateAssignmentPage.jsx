@@ -14,7 +14,12 @@ import {
   Target,
   Clock,
   Plus,
-  X
+  X,
+  Edit,
+  Eye,
+  Save,
+  PenTool,
+  Library
 } from 'lucide-react'
 import { supabase } from '../../services/supabaseClient'
 import TextGenerator from '../../components/TextGenerator'
@@ -30,6 +35,12 @@ export default function CreateAssignmentPage() {
   const [generatedText, setGeneratedText] = useState('')
   const [generatedProblems, setGeneratedProblems] = useState([])
   const [textMetadata, setTextMetadata] = useState({})
+  const [inputMode, setInputMode] = useState('generate') // 'generate', 'manual', 'existing'
+  const [manualText, setManualText] = useState('')
+  const [existingMaterials, setExistingMaterials] = useState([])
+  const [selectedMaterial, setSelectedMaterial] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [showFullText, setShowFullText] = useState(null)
   
   const {
     register,
@@ -40,7 +51,24 @@ export default function CreateAssignmentPage() {
 
   useEffect(() => {
     fetchStudents()
+    fetchExistingMaterials()
   }, [user, profile])
+
+  const fetchExistingMaterials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reading_materials')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (!error && data) {
+        setExistingMaterials(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch materials:', error)
+    }
+  }
 
   const fetchStudents = async () => {
     try {
@@ -67,6 +95,39 @@ export default function CreateAssignmentPage() {
   const handleTextGenerated = (text, metadata) => {
     setGeneratedText(text)
     setTextMetadata(metadata)
+  }
+
+  const proceedToProblems = () => {
+    if (inputMode === 'manual' && !manualText.trim()) {
+      alert('지문을 입력해주세요.')
+      return
+    }
+    if (inputMode === 'existing' && !selectedMaterial) {
+      alert('지문을 선택해주세요.')
+      return
+    }
+    if (inputMode === 'generate' && !generatedText) {
+      alert('먼저 지문을 생성해주세요.')
+      return
+    }
+    
+    // 선택된 모드에 따라 지문 설정
+    if (inputMode === 'manual') {
+      setGeneratedText(manualText)
+      setTextMetadata({ 
+        topic: '직접 입력', 
+        level: 'intermediate',
+        wordCount: manualText.length 
+      })
+    } else if (inputMode === 'existing') {
+      setGeneratedText(selectedMaterial.content)
+      setTextMetadata({ 
+        topic: selectedMaterial.topic || selectedMaterial.title,
+        level: selectedMaterial.level || 'intermediate',
+        wordCount: selectedMaterial.word_count || selectedMaterial.content.length
+      })
+    }
+    
     setStep(2)
   }
 
@@ -101,21 +162,29 @@ export default function CreateAssignmentPage() {
 
     setLoading(true)
     try {
-      // 1. 지문 저장
-      const { data: materialData, error: materialError } = await supabase
-        .from('reading_materials')
-        .insert({
-          title: data.title,
-          content: generatedText,
-          topic: textMetadata.topic || data.title,
-          level: textMetadata.level || 'intermediate',
-          word_count: generatedText.length,
-          created_by: user.id
-        })
-        .select()
-        .single()
+      let materialData
+      
+      // 기존 지문 사용하는 경우가 아닐 때만 새로 저장
+      if (inputMode !== 'existing' || !selectedMaterial) {
+        const { data: newMaterial, error: materialError } = await supabase
+          .from('reading_materials')
+          .insert({
+            title: data.title,
+            content: generatedText,
+            topic: textMetadata.topic || data.title,
+            level: textMetadata.level || 'intermediate',
+            word_count: generatedText.length,
+            created_by: user.id
+          })
+          .select()
+          .single()
 
-      if (materialError) throw materialError
+        if (materialError) throw materialError
+        materialData = newMaterial
+      } else {
+        // 기존 지문 사용
+        materialData = selectedMaterial
+      }
 
       // 2. 문제 저장
       const problemsToInsert = generatedProblems.map(problem => ({
@@ -215,18 +284,179 @@ export default function CreateAssignmentPage() {
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                1단계: 지문 생성
+                1단계: 지문 준비
               </h2>
               <p className="mt-1 text-sm text-gray-600">
-                AI를 활용하여 학습 지문을 생성합니다.
+                AI 생성, 직접 입력, 또는 기존 지문 중 선택하세요.
               </p>
             </div>
             <div className="p-6">
-              <TextGenerator
-                onTextGenerated={handleTextGenerated}
-                showPreview={true}
-                allowEdit={true}
-              />
+              {/* 모드 선택 탭 */}
+              <div className="flex space-x-4 mb-6 border-b">
+                <button
+                  onClick={() => setInputMode('generate')}
+                  className={`pb-3 px-1 font-medium text-sm border-b-2 transition ${
+                    inputMode === 'generate'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 inline mr-1" />
+                  AI 지문 생성
+                </button>
+                <button
+                  onClick={() => setInputMode('manual')}
+                  className={`pb-3 px-1 font-medium text-sm border-b-2 transition ${
+                    inputMode === 'manual'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <PenTool className="w-4 h-4 inline mr-1" />
+                  직접 입력
+                </button>
+                <button
+                  onClick={() => setInputMode('existing')}
+                  className={`pb-3 px-1 font-medium text-sm border-b-2 transition ${
+                    inputMode === 'existing'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Library className="w-4 h-4 inline mr-1" />
+                  기존 지문 선택
+                </button>
+              </div>
+
+              {/* AI 생성 모드 */}
+              {inputMode === 'generate' && (
+                <div className="space-y-4">
+                  <TextGenerator
+                    onTextGenerated={handleTextGenerated}
+                    showPreview={true}
+                    allowEdit={true}
+                  />
+                  {generatedText && (
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={proceedToProblems}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        다음 단계
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 직접 입력 모드 */}
+              {inputMode === 'manual' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      지문 직접 입력
+                    </label>
+                    <textarea
+                      value={manualText}
+                      onChange={(e) => setManualText(e.target.value)}
+                      placeholder="학습 지문을 직접 입력하세요..."
+                      className="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <div className="mt-2 text-sm text-gray-500 text-right">
+                      {manualText.length}자
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={proceedToProblems}
+                      disabled={!manualText.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      다음 단계
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 기존 지문 선택 모드 */}
+              {inputMode === 'existing' && (
+                <div className="space-y-4">
+                  <div className="grid gap-4">
+                    {existingMaterials.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">
+                        저장된 지문이 없습니다.
+                      </p>
+                    ) : (
+                      existingMaterials.map((material) => (
+                        <div
+                          key={material.id}
+                          className={`p-4 border rounded-lg cursor-pointer transition ${
+                            selectedMaterial?.id === material.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => setSelectedMaterial(material)}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">
+                                {material.title}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1">
+                                주제: {material.topic} | {material.word_count}자
+                              </p>
+                              {showFullText === material.id ? (
+                                <div className="mt-3">
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    {material.content}
+                                  </p>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setShowFullText(null)
+                                    }}
+                                    className="text-sm text-blue-600 hover:text-blue-700 mt-2"
+                                  >
+                                    접기
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="mt-2">
+                                  <p className="text-sm text-gray-700 line-clamp-3">
+                                    {material.content}
+                                  </p>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setShowFullText(material.id)
+                                    }}
+                                    className="text-sm text-blue-600 hover:text-blue-700 mt-2"
+                                  >
+                                    전체 보기
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <div className="ml-4 text-sm text-gray-500">
+                              {new Date(material.created_at).toLocaleDateString('ko-KR')}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {selectedMaterial && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={proceedToProblems}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        다음 단계
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -245,9 +475,38 @@ export default function CreateAssignmentPage() {
             </div>
             <div className="p-6">
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">생성된 지문</h3>
-                <p className="text-gray-700 whitespace-pre-wrap line-clamp-5">
-                  {generatedText}
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-medium text-gray-900">학습 지문</h3>
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    {isEditing ? (
+                      <>
+                        <Save className="w-4 h-4" />
+                        저장
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="w-4 h-4" />
+                        편집
+                      </>
+                    )}
+                  </button>
+                </div>
+                {isEditing ? (
+                  <textarea
+                    value={generatedText}
+                    onChange={(e) => setGeneratedText(e.target.value)}
+                    className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                ) : (
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {generatedText}
+                  </p>
+                )}
+                <p className="text-sm text-gray-500 mt-2 text-right">
+                  {generatedText.length}자
                 </p>
               </div>
               

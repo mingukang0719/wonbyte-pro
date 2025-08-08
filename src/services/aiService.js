@@ -529,7 +529,27 @@ class AIService {
 // 지문 생성 메서드 추가
 AIService.prototype.generateReadingText = async function(topic, gradeLevel, wordCount, difficulty, provider = 'claude') {
   try {
-    const prompt = `${topic}에 대한 ${gradeLevel} 수준의 ${wordCount}자 정도의 지문을 생성해주세요. 난이도는 ${difficulty}입니다.`
+    const difficultyText = {
+      easy: '쉬운',
+      medium: '보통',
+      hard: '어려운'
+    }[difficulty] || '보통'
+    
+    const prompt = `다음 요구사항에 맞는 한국어 읽기 지문을 작성해주세요:
+
+주제: ${topic}
+학년 수준: ${gradeLevel}
+글자 수: ${wordCount}자 (±10%)
+난이도: ${difficultyText}
+
+요구사항:
+1. 정확히 ${wordCount}자 정도의 완전한 지문을 생성해주세요.
+2. ${gradeLevel} 학생이 이해할 수 있는 어휘와 문장 구조를 사용하세요.
+3. 주제에 대한 흥미로운 정보나 이야기를 포함하세요.
+4. 문단 구성이 자연스럽고 논리적이어야 합니다.
+5. 교육적 가치가 있는 내용을 포함해주세요.
+
+지문을 작성해주세요:`
     
     const response = await this.generateContent({
       contentType: 'reading',

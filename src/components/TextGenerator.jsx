@@ -6,10 +6,12 @@ export default function TextGenerator({ onTextGenerated, showPreview = true, all
   const [formData, setFormData] = useState({
     topic: '',
     gradeLevel: '초3',
-    wordCount: '300',
+    wordCount: '400',
     difficulty: 'medium',
-    provider: 'claude'
+    provider: 'claude',
+    customWordCount: ''
   })
+  const [useCustomWordCount, setUseCustomWordCount] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedText, setGeneratedText] = useState('')
   const [error, setError] = useState('')
@@ -37,10 +39,11 @@ export default function TextGenerator({ onTextGenerated, showPreview = true, all
     setError('')
 
     try {
+      const wordCount = useCustomWordCount ? parseInt(formData.customWordCount) : parseInt(formData.wordCount)
       const response = await aiService.generateReadingText(
         formData.topic,
         formData.gradeLevel,
-        parseInt(formData.wordCount),
+        wordCount,
         formData.difficulty,
         formData.provider
       )
@@ -122,16 +125,34 @@ export default function TextGenerator({ onTextGenerated, showPreview = true, all
               글자 수
             </label>
             <select
-              value={formData.wordCount}
-              onChange={(e) => setFormData({ ...formData, wordCount: e.target.value })}
+              value={useCustomWordCount ? 'custom' : formData.wordCount}
+              onChange={(e) => {
+                if (e.target.value === 'custom') {
+                  setUseCustomWordCount(true)
+                } else {
+                  setUseCustomWordCount(false)
+                  setFormData({ ...formData, wordCount: e.target.value })
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="200">200자</option>
-              <option value="300">300자</option>
               <option value="400">400자</option>
-              <option value="500">500자</option>
               <option value="600">600자</option>
+              <option value="800">800자</option>
+              <option value="1200">1200자</option>
+              <option value="custom">직접 입력</option>
             </select>
+            {useCustomWordCount && (
+              <input
+                type="number"
+                min="100"
+                max="2000"
+                value={formData.customWordCount}
+                onChange={(e) => setFormData({ ...formData, customWordCount: e.target.value })}
+                placeholder="100 ~ 2000자"
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            )}
           </div>
 
           {/* 난이도 */}
