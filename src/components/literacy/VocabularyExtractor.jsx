@@ -42,8 +42,8 @@ function HanjaDisplay({ etymology }) {
 
   // "觀(볼 관) + 察(살필 찰)" 형태를 파싱하여 개별 한자 표시
   const parseHanja = (etymologyStr) => {
-    // 한자(훈 음) 패턴 매칭
-    const hanjaPattern = /([一-龯])\(([^)]+)\)/g
+    // 한자(훈 음) 패턴 매칭 - 유니코드 범위 수정
+    const hanjaPattern = /([\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF])\(([^)]+)\)/g
     const matches = []
     let match
     

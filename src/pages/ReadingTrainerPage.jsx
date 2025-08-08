@@ -24,7 +24,7 @@ import { validateFile } from '../utils/validation'
 import { useApiCall, useParallelApiCalls } from '../hooks/useApiCall'
 import { useTextAnalysis } from '../hooks/useTextAnalysis'
 import { useAuth } from '../contexts/AuthContext'
-import { generatePDF } from '../utils/pdfGenerator'
+import { generatePDF } from '../utils/pdfGeneratorCanvas'
 import { getAvailableProviders } from '../config/apiKeys'
 import ErrorMessage from '../components/common/ErrorMessage'
 import AnalysisChart from '../components/literacy/AnalysisChart'
@@ -38,7 +38,6 @@ import BookmarkManager from '../components/bookmarks/BookmarkManager'
 import WrongAnswerNote from '../components/wronganswers/WrongAnswerNote'
 import UserProfile from '../components/profile/UserProfile'
 import GameDashboard from '../components/gamification/GameDashboard'
-import WonbyteMode from '../components/literacy/WonbyteMode'
 import EnhancedWonbyteMode from '../components/literacy/EnhancedWonbyteMode'
 import ExplanationModal from '../components/literacy/ExplanationModal'
 import ProblemSolver from '../components/literacy/ProblemSolver'
@@ -57,7 +56,6 @@ export default function ReadingTrainerPage() {
   const [showWrongAnswers, setShowWrongAnswers] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showGameDashboard, setShowGameDashboard] = useState(false)
-  const [showWonbyteMode, setShowWonbyteMode] = useState(false)
   const [showEnhancedWonbyteMode, setShowEnhancedWonbyteMode] = useState(false)
   const [showExplanations, setShowExplanations] = useState(false)
   const [showProblemSolver, setShowProblemSolver] = useState(false)
@@ -116,14 +114,26 @@ export default function ReadingTrainerPage() {
       const gradeInfo = GRADE_OPTIONS.find(grade => grade.value === selectedGrade)
       const targetAge = gradeInfo ? gradeInfo.age : 10
       
-      const prompt = `${topic}에 대한 ${selectedGrade} 수준의 한국어 읽기 지문을 ${length}자로 작성해주세요.`
+      const prompt = `다음 조건에 맞는 지문을 작성해주세요:
+- 주제: ${topic}
+- 학년: ${selectedGrade}
+- 글자수: 정확히 ${length}자 (±50자 이내)
+- 난이도: ${gradeInfo.label} 수준
+
+중요 지침:
+1. 인사말이나 도입부("~에 대해 알아볼까요?" 등) 없이 바로 본문으로 시작
+2. 주제와 직접적으로 관련된 내용만 포함
+3. 사실 관계를 정확히 검증하여 오류가 없도록 작성
+4. 지정된 글자수를 반드시 준수
+
+지문만 작성하고 다른 설명은 포함하지 마세요.`
       
       const response = await generateTextApi({
         provider: selectedProvider,
         contentType: 'reading',
-        prompt: topic,
+        prompt: prompt,
         targetAge: targetAge,
-        difficulty: 'intermediate',
+        difficulty: selectedGrade,
         contentLength: parseInt(length)
       })
       
@@ -711,19 +721,11 @@ export default function ReadingTrainerPage() {
               <h3 className="text-lg font-semibold mb-3">독해력 훈련 모드</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <button
-                  onClick={() => setShowWonbyteMode(true)}
+                  onClick={() => setShowEnhancedWonbyteMode(true)}
                   className="px-4 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  <BookOpen className="w-5 h-5" />
-                  원바이트 모드 (기본)
-                </button>
-                
-                <button
-                  onClick={() => setShowEnhancedWonbyteMode(true)}
-                  className="px-4 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                >
                   <Brain className="w-5 h-5" />
-                  원바이트 모드 (향상)
+                  원바이트 모드
                 </button>
                 
                 <button
@@ -935,17 +937,6 @@ export default function ReadingTrainerPage() {
         <GameDashboard onClose={() => setShowGameDashboard(false)} />
       )}
       
-      {/* 원바이트 모드 */}
-      {showWonbyteMode && (
-        <WonbyteMode 
-          text={mode === 'generate' ? generatedText : userText}
-          onClose={() => setShowWonbyteMode(false)}
-          onComplete={(charsRead) => {
-            console.log(`완료! ${charsRead}자 읽음`)
-            setShowWonbyteMode(false)
-          }}
-        />
-      )}
       
       {/* 해설 모달 */}
       {showExplanations && generatedProblems.length > 0 && (
