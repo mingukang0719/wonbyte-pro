@@ -19,28 +19,37 @@ import {
   Eye,
   Save,
   PenTool,
-  Library
+  Library,
+  Sparkles
 } from 'lucide-react'
 import { supabase } from '../../services/supabaseClient'
 import TextGenerator from '../../components/TextGenerator'
 import ProblemGenerator from '../../components/ProblemGenerator'
 
 export default function CreateAssignmentPage() {
-  const { user, profile } = useAuth()
-  const navigate = useNavigate()
-  const [step, setStep] = useState(1) // 1: 지문생성, 2: 문제생성, 3: 학생배정
-  const [loading, setLoading] = useState(false)
-  const [students, setStudents] = useState([])
-  const [selectedStudents, setSelectedStudents] = useState([])
-  const [generatedText, setGeneratedText] = useState('')
-  const [generatedProblems, setGeneratedProblems] = useState([])
-  const [textMetadata, setTextMetadata] = useState({})
-  const [inputMode, setInputMode] = useState('generate') // 'generate', 'manual', 'existing'
-  const [manualText, setManualText] = useState('')
-  const [existingMaterials, setExistingMaterials] = useState([])
-  const [selectedMaterial, setSelectedMaterial] = useState(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [showFullText, setShowFullText] = useState(null)
+  // Debug information
+  const [debugInfo, setDebugInfo] = useState({
+    mounted: false,
+    authLoaded: false,
+    error: null
+  })
+
+  try {
+    const { user, profile } = useAuth()
+    const navigate = useNavigate()
+    const [step, setStep] = useState(1) // 1: 지문생성, 2: 문제생성, 3: 학생배정
+    const [loading, setLoading] = useState(false)
+    const [students, setStudents] = useState([])
+    const [selectedStudents, setSelectedStudents] = useState([])
+    const [generatedText, setGeneratedText] = useState('')
+    const [generatedProblems, setGeneratedProblems] = useState([])
+    const [textMetadata, setTextMetadata] = useState({})
+    const [inputMode, setInputMode] = useState('generate') // 'generate', 'manual', 'existing'
+    const [manualText, setManualText] = useState('')
+    const [existingMaterials, setExistingMaterials] = useState([])
+    const [selectedMaterial, setSelectedMaterial] = useState(null)
+    const [isEditing, setIsEditing] = useState(false)
+    const [showFullText, setShowFullText] = useState(null)
   
   const {
     register,
@@ -162,22 +171,25 @@ export default function CreateAssignmentPage() {
 
     setLoading(true)
     try {
+      const authToken = localStorage.getItem('auth_token')
+      if (!authToken) {
+        throw new Error('인증 토큰이 없습니다.')
+      }
+      
       let materialData
       
       // 기존 지문 사용하는 경우가 아닐 때만 새로 저장
       if (inputMode !== 'existing' || !selectedMaterial) {
+        // RLS 보안 함수를 통해 자료 생성
         const { data: newMaterial, error: materialError } = await supabase
-          .from('reading_materials')
-          .insert({
-            title: data.title,
-            content: generatedText,
-            topic: textMetadata.topic || data.title,
-            level: textMetadata.level || 'intermediate',
-            word_count: generatedText.length,
-            created_by: user.id
+          .rpc('create_reading_material', {
+            auth_token: authToken,
+            p_title: data.title,
+            p_content: generatedText,
+            p_topic: textMetadata.topic || data.title,
+            p_level: textMetadata.level || 'intermediate',
+            p_word_count: generatedText.length
           })
-          .select()
-          .single()
 
         if (materialError) throw materialError
         materialData = newMaterial
@@ -199,8 +211,10 @@ export default function CreateAssignmentPage() {
       }))
 
       const { error: problemsError } = await supabase
-        .from('problems')
-        .insert(problemsToInsert)
+        .rpc('create_problems', {
+          auth_token: authToken,
+          p_problems: problemsToInsert
+        })
 
       if (problemsError) throw problemsError
 
@@ -208,15 +222,16 @@ export default function CreateAssignmentPage() {
       const assignmentsToInsert = selectedStudents.map(studentId => ({
         material_id: materialData.id,
         assigned_to: studentId,
-        assigned_by: user.id,
         due_date: data.dueDate || null,
         status: 'pending',
         assigned_at: new Date().toISOString()
       }))
 
       const { error: assignmentsError } = await supabase
-        .from('assignments')
-        .insert(assignmentsToInsert)
+        .rpc('create_assignments', {
+          auth_token: authToken,
+          p_assignments: assignmentsToInsert
+        })
 
       if (assignmentsError) throw assignmentsError
 
@@ -523,6 +538,14 @@ export default function CreateAssignmentPage() {
                 >
                   이전 단계
                 </button>
+                {generatedProblems.length > 0 && (
+                  <button
+                    onClick={() => setStep(3)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    다음 단계
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -666,4 +689,37 @@ export default function CreateAssignmentPage() {
       </main>
     </div>
   )
+  } catch (error) {
+    // If there's an error, show diagnostic information
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">페이지 로드 오류</h1>
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-semibold mb-2">오류 정보:</h2>
+              <pre className="bg-gray-100 p-4 rounded overflow-auto text-sm">
+                {error?.toString()}
+              </pre>
+            </div>
+            <div>
+              <h2 className="font-semibold mb-2">환경 변수 상태:</h2>
+              <ul className="space-y-1 text-sm">
+                <li>REACT_APP_SUPABASE_URL: {process.env.REACT_APP_SUPABASE_URL ? '✅ 설정됨' : '❌ 미설정'}</li>
+                <li>REACT_APP_SUPABASE_ANON_KEY: {process.env.REACT_APP_SUPABASE_ANON_KEY ? '✅ 설정됨' : '❌ 미설정'}</li>
+              </ul>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => window.history.back()}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                돌아가기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }

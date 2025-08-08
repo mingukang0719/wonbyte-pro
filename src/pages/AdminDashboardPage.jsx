@@ -128,26 +128,38 @@ export default function AdminDashboardPage() {
       .from('assignments')
       .select(`
         *,
-        reading_materials!inner(title, topic),
-        profiles!assigned_to(full_name, grade_level),
-        progress:assignment_progress(
-          completed_at,
-          score,
-          time_spent
-        )
+        reading_materials(title, topic)
       `)
-      .order('created_at', { ascending: false })
+      .order('assigned_at', { ascending: false })
 
     // 관리자(admin)가 아닌 경우에만 필터링
     if (profile.role === 'teacher') {
-      query = query.eq('assigned_by', user.id)
+      query = query.eq('assigned_by', profile.id)
     }
     // admin인 경우 모든 과제 조회 (필터링 없음)
 
     const { data, error } = await query
 
     if (!error && data) {
-      setAssignments(data)
+      // Fetch student details for each assignment
+      const assignmentsWithStudents = await Promise.all(
+        data.map(async (assignment) => {
+          const { data: student } = await supabase
+            .from('profiles')
+            .select('full_name, grade_level')
+            .eq('id', assignment.assigned_to)
+            .single()
+          
+          return {
+            ...assignment,
+            student: student
+          }
+        })
+      )
+      setAssignments(assignmentsWithStudents)
+    } else if (error) {
+      console.error('Failed to fetch assignments:', error)
+      setAssignments([])
     }
   }
 
@@ -476,16 +488,16 @@ export default function AdminDashboardPage() {
                         assignment.status === 'in_progress' ? 'bg-blue-500' : 'bg-yellow-500'
                       }`} />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{assignment.profiles.full_name}</p>
-                        <p className="text-xs text-gray-500">{assignment.reading_materials.title}</p>
+                        <p className="text-sm font-medium text-gray-900">{assignment.student?.full_name || '-'}</p>
+                        <p className="text-xs text-gray-500">{assignment.reading_materials?.title || '-'}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-900">
-                        {assignment.progress?.[0]?.score ? `${assignment.progress[0].score}점` : '-'}
+                        -
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(assignment.created_at).toLocaleDateString('ko-KR')}
+                        {new Date(assignment.assigned_at).toLocaleDateString('ko-KR')}
                       </p>
                     </div>
                   </div>
@@ -715,10 +727,10 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {assignment.profiles.full_name}
+                            {assignment.student?.full_name || '-'}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {assignment.profiles.grade_level}
+                            {assignment.student?.grade_level || '-'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -733,7 +745,7 @@ export default function AdminDashboardPage() {
                           {getStatusBadge(assignment.status)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {assignment.progress?.[0]?.score ? `${assignment.progress[0].score}점` : '-'}
+                          -
                         </td>
                       </tr>
                     ))}

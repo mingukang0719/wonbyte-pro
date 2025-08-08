@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY
+// Webpack DefinePlugin으로 주입된 환경 변수 사용
+const supabaseUrl = (typeof process !== 'undefined' && process.env?.REACT_APP_SUPABASE_URL) || 
+                    import.meta.env?.VITE_SUPABASE_URL || 
+                    ''
+const supabaseAnonKey = (typeof process !== 'undefined' && process.env?.REACT_APP_SUPABASE_ANON_KEY) || 
+                        import.meta.env?.VITE_SUPABASE_ANON_KEY || 
+                        ''
 
 let supabase
 

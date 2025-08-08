@@ -19,6 +19,8 @@ import StudentEditPage from './pages/admin/StudentEditPage'
 import VocabularyTrainingPage from './pages/admin/VocabularyTrainingPage'
 import ComprehensionTrainingPage from './pages/admin/ComprehensionTrainingPage'
 import TrainingSchedulePage from './pages/admin/TrainingSchedulePage'
+import TestEnvPage from './pages/TestEnvPage'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function App() {
   return (
@@ -28,6 +30,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/test-env" element={<TestEnvPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/reading-trainer" element={<ReadingTrainerPage />} />
           <Route path="/editor" element={<EditorPage />} />
@@ -79,7 +82,9 @@ function App() {
             path="/admin/create-assignment" 
             element={
               <PrivateRoute allowedRoles={['teacher', 'admin']}>
-                <CreateAssignmentPage />
+                <ErrorBoundary>
+                  <CreateAssignmentPage />
+                </ErrorBoundary>
               </PrivateRoute>
             } 
           />
