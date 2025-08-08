@@ -12,7 +12,11 @@ import {
   BarChart3,
   LogOut,
   User,
-  Settings
+  Settings,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react'
 import { supabase } from '../services/supabaseClient'
 
@@ -29,6 +33,7 @@ export default function StudentDashboardPage() {
     nextLevelProgress: 0
   })
   const [recentAchievements, setRecentAchievements] = useState([])
+  const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -61,6 +66,26 @@ export default function StudentDashboardPage() {
         .eq('user_id', user.id)
         .order('achieved_at', { ascending: false })
         .limit(3)
+
+      // 할당된 과제 가져오기
+      const { data: assignedTasks, error: assignError } = await supabase
+        .from('assignments')
+        .select(`
+          *,
+          reading_materials(
+            id,
+            title,
+            topic,
+            level,
+            word_count
+          )
+        `)
+        .eq('assigned_to', profile.id)
+        .order('assigned_at', { ascending: false })
+
+      if (!assignError && assignedTasks) {
+        setAssignments(assignedTasks)
+      }
 
       // 통계 계산
       const totalChars = totalStats?.reduce((sum, stat) => sum + (stat.characters_read || 0), 0) || 0
@@ -103,6 +128,47 @@ export default function StudentDashboardPage() {
 
   const handleStartLearning = () => {
     navigate('/student/reading-trainer')
+  }
+
+  const handleStartAssignment = (assignment) => {
+    // 과제 전용 학습 페이지로 이동
+    navigate('/student/assignment-reading', { 
+      state: { 
+        assignmentId: assignment.id,
+        materialId: assignment.material_id,
+        assignmentData: assignment
+      } 
+    })
+  }
+
+  const getAssignmentStatusBadge = (status) => {
+    const badges = {
+      pending: { icon: AlertCircle, color: 'text-yellow-600 bg-yellow-50', text: '대기중' },
+      in_progress: { icon: Clock, color: 'text-blue-600 bg-blue-50', text: '진행중' },
+      completed: { icon: CheckCircle, color: 'text-green-600 bg-green-50', text: '완료' }
+    }
+    const badge = badges[status] || badges.pending
+    const Icon = badge.icon
+    
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+        <Icon className="w-3 h-3" />
+        {badge.text}
+      </span>
+    )
+  }
+
+  const getDaysRemaining = (dueDate) => {
+    if (!dueDate) return null
+    const due = new Date(dueDate)
+    const now = new Date()
+    const diffTime = due - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays < 0) return '마감일 지남'
+    if (diffDays === 0) return '오늘 마감'
+    if (diffDays === 1) return '내일 마감'
+    return `${diffDays}일 남음`
   }
 
   if (loading) {
@@ -187,6 +253,69 @@ export default function StudentDashboardPage() {
               <p className="text-sm text-gray-600">학습 시간</p>
             </div>
           </div>
+        </div>
+
+        {/* 할당된 과제 */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <FileText className="w-6 h-6 text-blue-600" />
+              나의 과제
+            </h2>
+            <span className="text-sm text-gray-500">
+              총 {assignments.filter(a => a.status !== 'completed').length}개의 미완료 과제
+            </span>
+          </div>
+
+          {assignments.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">아직 할당된 과제가 없습니다.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {assignments.slice(0, 5).map((assignment) => (
+                <div
+                  key={assignment.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                  onClick={() => handleStartAssignment(assignment)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="font-semibold text-gray-900">
+                        {assignment.reading_materials?.title || '제목 없음'}
+                      </h3>
+                      {getAssignmentStatusBadge(assignment.status)}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span>주제: {assignment.reading_materials?.topic || '-'}</span>
+                      <span>난이도: {assignment.reading_materials?.level || '-'}</span>
+                      <span>{assignment.reading_materials?.word_count || 0}자</span>
+                      {assignment.due_date && (
+                        <span className={`font-medium ${
+                          getDaysRemaining(assignment.due_date).includes('지남') ? 'text-red-600' : 
+                          getDaysRemaining(assignment.due_date).includes('오늘') ? 'text-orange-600' : 
+                          'text-gray-600'
+                        }`}>
+                          {getDaysRemaining(assignment.due_date)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              ))}
+              
+              {assignments.length > 5 && (
+                <button
+                  onClick={() => navigate('/student/assignments')}
+                  className="w-full py-2 text-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  모든 과제 보기 ({assignments.length}개)
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 레벨 및 진도 */}

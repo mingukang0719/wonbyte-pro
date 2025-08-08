@@ -21,6 +21,7 @@ import ComprehensionTrainingPage from './pages/admin/ComprehensionTrainingPage'
 import TrainingSchedulePage from './pages/admin/TrainingSchedulePage'
 import TestEnvPage from './pages/TestEnvPage'
 import ErrorBoundary from './components/ErrorBoundary'
+import AssignmentReadingPage from './pages/AssignmentReadingPage'
 
 function App() {
   return (
@@ -49,6 +50,14 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['student']}>
                 <ReadingTrainerPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/student/assignment-reading" 
+            element={
+              <PrivateRoute allowedRoles={['student']}>
+                <AssignmentReadingPage />
               </PrivateRoute>
             } 
           />
