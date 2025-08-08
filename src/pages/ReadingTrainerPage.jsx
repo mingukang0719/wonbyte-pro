@@ -14,7 +14,8 @@ import {
   AlertCircle,
   User,
   Trophy,
-  X
+  X,
+  Target
 } from 'lucide-react'
 import aiService from '../services/aiService'
 import { config } from '../config'
@@ -22,6 +23,7 @@ import { TOPIC_CATEGORIES, GRADE_OPTIONS, LENGTH_OPTIONS } from '../utils/consta
 import { validateFile } from '../utils/validation'
 import { useApiCall, useParallelApiCalls } from '../hooks/useApiCall'
 import { useTextAnalysis } from '../hooks/useTextAnalysis'
+import { useAuth } from '../contexts/AuthContext'
 import { generatePDF } from '../utils/pdfGenerator'
 import { getAvailableProviders } from '../config/apiKeys'
 import ErrorMessage from '../components/common/ErrorMessage'
@@ -37,10 +39,14 @@ import WrongAnswerNote from '../components/wronganswers/WrongAnswerNote'
 import UserProfile from '../components/profile/UserProfile'
 import GameDashboard from '../components/gamification/GameDashboard'
 import WonbyteMode from '../components/literacy/WonbyteMode'
+import EnhancedWonbyteMode from '../components/literacy/EnhancedWonbyteMode'
 import ExplanationModal from '../components/literacy/ExplanationModal'
 import ProblemSolver from '../components/literacy/ProblemSolver'
+import ComprehensionTrainingHub from '../components/literacy/ComprehensionTrainingModules'
+import ComprehensionAssessment from '../components/literacy/ComprehensionAssessment'
 
 export default function ReadingTrainerPage() {
+  const { user } = useAuth()
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
   const [step, setStep] = useState(1) // 1: 설정, 2: 지문, 3: 문제
   
@@ -52,8 +58,12 @@ export default function ReadingTrainerPage() {
   const [showProfile, setShowProfile] = useState(false)
   const [showGameDashboard, setShowGameDashboard] = useState(false)
   const [showWonbyteMode, setShowWonbyteMode] = useState(false)
+  const [showEnhancedWonbyteMode, setShowEnhancedWonbyteMode] = useState(false)
   const [showExplanations, setShowExplanations] = useState(false)
   const [showProblemSolver, setShowProblemSolver] = useState(false)
+  const [showComprehensionTraining, setShowComprehensionTraining] = useState(false)
+  const [showComprehensionAssessment, setShowComprehensionAssessment] = useState(false)
+  const [assessmentData, setAssessmentData] = useState({})
   
   // 지문 생성 설정
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -696,15 +706,42 @@ export default function ReadingTrainerPage() {
               gradeLevel={selectedGrade}
             />
 
-            {/* 원바이트 모드 버튼 */}
-            <div className="mb-6 flex gap-4">
-              <button
-                onClick={() => setShowWonbyteMode(true)}
-                className="px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
-              >
-                <BookOpen className="w-5 h-5" />
-                원바이트 모드
-              </button>
+            {/* 독해력 훈련 버튼들 */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">독해력 훈련 모드</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <button
+                  onClick={() => setShowWonbyteMode(true)}
+                  className="px-4 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  원바이트 모드 (기본)
+                </button>
+                
+                <button
+                  onClick={() => setShowEnhancedWonbyteMode(true)}
+                  className="px-4 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Brain className="w-5 h-5" />
+                  원바이트 모드 (향상)
+                </button>
+                
+                <button
+                  onClick={() => setShowComprehensionTraining(true)}
+                  className="px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Target className="w-5 h-5" />
+                  독해력 훈련 센터
+                </button>
+                
+                <button
+                  onClick={() => setShowComprehensionAssessment(true)}
+                  className="px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <BarChart3 className="w-5 h-5" />
+                  이해도 평가
+                </button>
+              </div>
             </div>
 
             {/* 문해력 분석 */}
@@ -940,6 +977,81 @@ export default function ReadingTrainerPage() {
                 onComplete={() => {
                   setShowProblemSolver(false)
                   // 완료 후 추가 액션 가능
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 향상된 원바이트 모드 */}
+      {showEnhancedWonbyteMode && (
+        <EnhancedWonbyteMode 
+          text={mode === 'generate' ? generatedText : userText}
+          gradeLevel={selectedGrade}
+          onClose={() => setShowEnhancedWonbyteMode(false)}
+          onComplete={(charsRead, comprehensionScore) => {
+            console.log(`완료! ${charsRead}자 읽음, 이해도 ${comprehensionScore}%`)
+            setAssessmentData(prev => ({
+              ...prev,
+              keywordQuizScore: comprehensionScore,
+              lastActivity: new Date().toISOString()
+            }))
+            setShowEnhancedWonbyteMode(false)
+          }}
+        />
+      )}
+      
+      {/* 독해력 훈련 센터 모달 */}
+      {showComprehensionTraining && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">독해력 훈련 센터</h2>
+              <button
+                onClick={() => setShowComprehensionTraining(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ComprehensionTrainingHub
+                text={mode === 'generate' ? generatedText : userText}
+                gradeLevel={selectedGrade}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 이해도 평가 모달 */}
+      {showComprehensionAssessment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">종합 이해도 평가</h2>
+              <button
+                onClick={() => setShowComprehensionAssessment(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ComprehensionAssessment
+                userId={user?.id}
+                assessmentData={{
+                  ...assessmentData,
+                  recentHistory: [
+                    { date: '2024-01-01', score: 75 },
+                    { date: '2024-01-02', score: 78 },
+                    { date: '2024-01-03', score: 82 },
+                    { date: '2024-01-04', score: 80 },
+                    { date: '2024-01-05', score: 85 },
+                  ],
+                  consecutiveDays: 5,
+                  totalBooksRead: 12
                 }}
               />
             </div>
