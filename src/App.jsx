@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import PrivateRoute from './components/auth/PrivateRoute'
 
@@ -15,7 +15,7 @@ import EditorPage from './pages/EditorPage'
 
 function App() {
   return (
-    <Router>
+    <Router basename="/">
       <AuthProvider>
         <Routes>
           {/* Public Routes */}
