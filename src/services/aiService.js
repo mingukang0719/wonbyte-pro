@@ -526,4 +526,25 @@ class AIService {
   }
 }
 
+// 지문 생성 메서드 추가
+AIService.prototype.generateReadingText = async function(topic, gradeLevel, wordCount, difficulty, provider = 'claude') {
+  try {
+    const prompt = `${topic}에 대한 ${gradeLevel} 수준의 ${wordCount}자 정도의 지문을 생성해주세요. 난이도는 ${difficulty}입니다.`
+    
+    const response = await this.generateContent({
+      contentType: 'reading',
+      prompt,
+      targetAge: gradeLevel,
+      difficulty,
+      contentLength: wordCount,
+      provider
+    })
+    
+    return response
+  } catch (error) {
+    console.error('Generate reading text error:', error)
+    throw error
+  }
+}
+
 export default new AIService()

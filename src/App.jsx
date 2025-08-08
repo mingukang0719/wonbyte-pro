@@ -15,6 +15,10 @@ import StudentDetailPage from './pages/admin/StudentDetailPage'
 import StudentProfilePage from './pages/StudentProfilePage'
 import ReadingTrainerPage from './pages/ReadingTrainerPage'
 import EditorPage from './pages/EditorPage'
+import StudentEditPage from './pages/admin/StudentEditPage'
+import VocabularyTrainingPage from './pages/admin/VocabularyTrainingPage'
+import ComprehensionTrainingPage from './pages/admin/ComprehensionTrainingPage'
+import TrainingSchedulePage from './pages/admin/TrainingSchedulePage'
 
 function App() {
   return (
@@ -84,6 +88,40 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['teacher', 'parent', 'admin']}>
                 <StudentDetailPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/students/:id/edit" 
+            element={
+              <PrivateRoute allowedRoles={['teacher', 'admin']}>
+                <StudentEditPage />
+              </PrivateRoute>
+            } 
+          />
+          
+          {/* Training Management Routes */}
+          <Route 
+            path="/admin/training/vocabulary" 
+            element={
+              <PrivateRoute allowedRoles={['teacher', 'admin']}>
+                <VocabularyTrainingPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/training/comprehension" 
+            element={
+              <PrivateRoute allowedRoles={['teacher', 'admin']}>
+                <ComprehensionTrainingPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/training/schedule" 
+            element={
+              <PrivateRoute allowedRoles={['teacher', 'admin']}>
+                <TrainingSchedulePage />
               </PrivateRoute>
             } 
           />

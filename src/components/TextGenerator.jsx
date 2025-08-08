@@ -7,7 +7,8 @@ export default function TextGenerator({ onTextGenerated, showPreview = true, all
     topic: '',
     gradeLevel: '초3',
     wordCount: '300',
-    difficulty: 'medium'
+    difficulty: 'medium',
+    provider: 'claude'
   })
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedText, setGeneratedText] = useState('')
@@ -40,7 +41,8 @@ export default function TextGenerator({ onTextGenerated, showPreview = true, all
         formData.topic,
         formData.gradeLevel,
         parseInt(formData.wordCount),
-        formData.difficulty
+        formData.difficulty,
+        formData.provider
       )
 
       if (response.success && response.content) {
@@ -145,6 +147,22 @@ export default function TextGenerator({ onTextGenerated, showPreview = true, all
               <option value="easy">쉬움</option>
               <option value="medium">보통</option>
               <option value="hard">어려움</option>
+            </select>
+          </div>
+
+          {/* AI 제공자 선택 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              AI 종류
+            </label>
+            <select
+              value={formData.provider}
+              onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="claude">Claude</option>
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Gemini</option>
             </select>
           </div>
         </div>
