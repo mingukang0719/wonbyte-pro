@@ -24,6 +24,7 @@
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^6.8.1",
     "dompurify": "^3.2.6",
+    "dotenv": "^17.2.1",
     "html-webpack-plugin": "^5.6.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
@@ -35,12 +36,12 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.62.0",
     "react-router-dom": "^6.8.1",
+    "recharts": "^3.1.2",
     "style-loader": "^3.3.3",
     "tailwindcss": "^3.4.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
-    "zustand": "^5.0.7",
-    "dotenv": "^17.2.1"
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^8.55.0",
