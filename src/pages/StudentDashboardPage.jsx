@@ -102,7 +102,7 @@ export default function StudentDashboardPage() {
   }
 
   const handleStartLearning = () => {
-    navigate('/reading-trainer')
+    navigate('/student/reading-trainer')
   }
 
   if (loading) {
