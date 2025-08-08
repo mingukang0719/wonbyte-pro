@@ -464,19 +464,12 @@ export default function ProblemGenerator({ text, gradeLevel, onProblemsChange })
                       <div className="space-y-2 mb-4">
                         {problem.options?.map((option, optionIndex) => (
                           <div key={optionIndex} className="flex items-center space-x-2">
-                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
-                              problem.correctAnswer === optionIndex
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
+                            <span className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium bg-gray-100 text-gray-600">
                               {optionIndex + 1}
                             </span>
-                            <span className={problem.correctAnswer === optionIndex ? 'font-medium text-green-700' : ''}>
+                            <span>
                               {option}
                             </span>
-                            {problem.correctAnswer === optionIndex && (
-                              <Check className="w-4 h-4 text-green-600" />
-                            )}
                           </div>
                         ))}
                       </div>
@@ -485,38 +478,16 @@ export default function ProblemGenerator({ text, gradeLevel, onProblemsChange })
                     {/* 서술형 문제 정보 */}
                     {problem.type === 'short_answer' && (
                       <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">예상 답안 길이:</span>
-                            <p className="text-sm text-gray-600">{problem.expectedLength}</p>
-                          </div>
-                          {problem.sampleAnswer && (
-                            <div>
-                              <span className="text-sm font-medium text-gray-700">예시 답안:</span>
-                              <p className="text-sm text-gray-600 italic">"{problem.sampleAnswer}"</p>
-                            </div>
-                          )}
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">답안 작성 공간:</span>
+                          <textarea
+                            className="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            rows="3"
+                            placeholder="답을 작성하세요..."
+                          />
                         </div>
-                        {problem.gradingCriteria && problem.gradingCriteria.length > 0 && (
-                          <div className="mt-3">
-                            <span className="text-sm font-medium text-gray-700">채점 기준:</span>
-                            <ul className="text-sm text-gray-600 list-disc list-inside mt-1">
-                              {problem.gradingCriteria.map((criteria, index) => (
-                                <li key={index}>{criteria}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
                       </div>
                     )}
-
-                    {/* 해설 */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-start">
-                        <span className="text-sm font-medium text-blue-700 mr-2">해설:</span>
-                        <p className="text-sm text-blue-800">{problem.explanation}</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}

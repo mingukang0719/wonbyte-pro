@@ -290,6 +290,86 @@ class AIService {
     }
   }
 
+  // 어휘 분석 생성
+  async generateVocabularyAnalysis(word, gradeLevel) {
+    try {
+      const prompt = `다음 단어에 대한 학습 자료를 생성해주세요:
+
+단어: ${word}
+학년: ${gradeLevel}
+
+다음 형식으로 응답해주세요:
+{
+  "meaning": "단어의 의미",
+  "hanja": [{"character": "한자", "meaning": "뜻", "reading": "음"}],
+  "example": "예문",
+  "synonyms": ["유의어1", "유의어2"],
+  "antonyms": ["반의어1", "반의어2"]
+}`
+      
+      const response = await this.generateContent({
+        contentType: 'vocabulary',
+        prompt,
+        targetAge: gradeLevel
+      })
+      
+      if (response.success && response.content) {
+        // Parse AI response
+        let parsedContent
+        try {
+          // content가 문자열인 경우 JSON 파싱
+          if (typeof response.content === 'string') {
+            parsedContent = JSON.parse(response.content)
+          } else {
+            parsedContent = response.content
+          }
+        } catch (e) {
+          // 파싱 실패 시 기본값 사용
+          parsedContent = {
+            meaning: `${word}의 의미를 설명합니다.`,
+            hanja: [],
+            example: `${word}을(를) 사용한 예문입니다.`,
+            synonyms: [],
+            antonyms: []
+          }
+        }
+        
+        return {
+          success: true,
+          content: {
+            word: word,
+            meaning: parsedContent.meaning || `${word}의 의미를 설명합니다.`,
+            hanja: parsedContent.hanja || [],
+            example: parsedContent.example || `${word}을(를) 사용한 예문입니다.`,
+            synonyms: parsedContent.synonyms || [],
+            antonyms: parsedContent.antonyms || [],
+            difficulty: '★★★☆☆',
+            gradeAppropriate: true
+          }
+        }
+      }
+      
+      throw new Error('AI 응답이 올바르지 않습니다.')
+      
+    } catch (error) {
+      console.error('AI Vocabulary Analysis Error:', error)
+      // 오류 시 기본 분석 반환
+      return {
+        success: true,
+        content: {
+          word: word,
+          meaning: `${word}의 의미를 설명합니다.`,
+          hanja: [],
+          example: `${word}을(를) 사용한 예문입니다.`,
+          synonyms: [],
+          antonyms: [],
+          difficulty: '★★★☆☆',
+          gradeAppropriate: true
+        }
+      }
+    }
+  }
+
   // AI 해설 생성
   async generateExplanation(params) {
     try {

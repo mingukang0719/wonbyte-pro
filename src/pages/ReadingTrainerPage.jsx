@@ -13,7 +13,8 @@ import {
   Brain,
   AlertCircle,
   User,
-  Trophy
+  Trophy,
+  X
 } from 'lucide-react'
 import aiService from '../services/aiService'
 import { config } from '../config'
@@ -37,6 +38,7 @@ import UserProfile from '../components/profile/UserProfile'
 import GameDashboard from '../components/gamification/GameDashboard'
 import WonbyteMode from '../components/literacy/WonbyteMode'
 import ExplanationModal from '../components/literacy/ExplanationModal'
+import ProblemSolver from '../components/literacy/ProblemSolver'
 
 export default function ReadingTrainerPage() {
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
@@ -51,6 +53,7 @@ export default function ReadingTrainerPage() {
   const [showGameDashboard, setShowGameDashboard] = useState(false)
   const [showWonbyteMode, setShowWonbyteMode] = useState(false)
   const [showExplanations, setShowExplanations] = useState(false)
+  const [showProblemSolver, setShowProblemSolver] = useState(false)
   
   // 지문 생성 설정
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -213,46 +216,20 @@ export default function ReadingTrainerPage() {
       const textToExport = mode === 'generate' ? generatedText : userText
       const gradeLabel = GRADE_OPTIONS.find(g => g.value === selectedGrade)?.label || selectedGrade
       
-      // 백엔드 PDF 생성 API 호출
-      const response = await fetch(`${config.apiUrl}/api/pdf/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: '원바이트 PRO 문해력 훈련',
-          grade: gradeLabel,
-          text: textToExport,
-          analysisResult,
-          selectedVocabulary: selectedVocabulary.filter(word => word.isChecked || word.selected),
-          generatedProblems
-        })
+      // 클라이언트 사이드 PDF 생성
+      await generatePDF({
+        title: '원바이트 PRO 문해력 훈련',
+        grade: gradeLabel,
+        text: textToExport,
+        selectedVocabulary: selectedVocabulary.filter(word => word.isChecked || word.selected),
+        generatedProblems
       })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
       
-      if (result.success) {
-        // HTML 콘텐츠를 새 창에서 열어서 PDF로 저장할 수 있게 함
-        const printWindow = window.open('', '_blank', 'width=900,height=1200,scrollbars=yes')
-        printWindow.document.write(result.htmlContent)
-        printWindow.document.close()
-        
-        // 인쇄 대화상자가 나타날 수 있도록 잠시 기다림
-        setTimeout(() => {
-          printWindow.focus()
-        }, 500)
-      } else {
-        throw new Error(result.error || 'PDF 생성에 실패했습니다')
-      }
     } catch (error) {
       console.error('PDF 생성 오류:', error)
       setErrorMessage(`PDF 생성 중 오류가 발생했습니다: ${error.message}`)
     }
-  }, [mode, generatedText, userText, selectedGrade, analysisResult, selectedVocabulary, generatedProblems])
+  }, [mode, generatedText, userText, selectedGrade, selectedVocabulary, generatedProblems])
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -779,19 +756,24 @@ export default function ReadingTrainerPage() {
               >
                 이전 단계
               </button>
-              <button
-                onClick={() => {
-                  if (generatedProblems.length > 0) {
-                    setStep(3)
-                  } else {
-                    alert('먼저 문제를 생성해주세요.')
-                  }
-                }}
-                disabled={generatedProblems.length === 0}
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                문제 풀기 시작
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowProblemSolver(true)}
+                  disabled={generatedProblems.length === 0}
+                  className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  <Brain className="w-5 h-5" />
+                  문제 풀기
+                </button>
+                <button
+                  onClick={handlePDFDownload}
+                  disabled={generatedProblems.length === 0}
+                  className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  인쇄&PDF 생성
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -935,6 +917,34 @@ export default function ReadingTrainerPage() {
           context={mode === 'generate' ? generatedText : userText}
           onClose={() => setShowExplanations(false)}
         />
+      )}
+      
+      {/* 문제 풀기 모달 */}
+      {showProblemSolver && generatedProblems.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">문해력 훈련 문제 풀기</h2>
+              <button
+                onClick={() => setShowProblemSolver(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ProblemSolver
+                problems={generatedProblems}
+                text={mode === 'generate' ? generatedText : userText}
+                gradeLevel={selectedGrade}
+                onComplete={() => {
+                  setShowProblemSolver(false)
+                  // 완료 후 추가 액션 가능
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -134,12 +134,12 @@ export default function WonbyteMode({ text, onClose, onComplete }) {
 
         {/* 문장 표시 영역 */}
         <div 
-          className="flex-1 flex items-center justify-center cursor-pointer"
+          className="flex-1 flex items-center cursor-pointer px-8"
           onClick={!isCompleted ? showNextSentence : undefined}
         >
-          <div className="text-center max-w-4xl">
+          <div className="max-w-4xl">
             {sentences[currentIndex] && (
-              <p className="text-3xl md:text-4xl lg:text-5xl text-white leading-relaxed font-medium">
+              <p className="text-3xl md:text-4xl lg:text-5xl text-white leading-relaxed font-medium text-left">
                 {sentences[currentIndex]}
               </p>
             )}

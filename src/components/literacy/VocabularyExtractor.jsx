@@ -192,17 +192,30 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
 
     try {
       // AI를 통해 어휘 분석
-      const prompt = `다음 어휘에 대한 상세 정보를 제공해주세요: "${newWord}"`
-      const response = await aiService.generateContent({
-        contentType: 'vocabulary_extraction',
-        prompt,
-        gradeLevel,
-        count: 1
-      })
+      const response = await aiService.generateVocabularyAnalysis(newWord, gradeLevel)
 
       let wordData
-      if (response.success && response.content?.vocabularyList?.[0]) {
-        wordData = response.content.vocabularyList[0]
+      if (response.success && response.content) {
+        // AI 응답에서 데이터 추출
+        const content = response.content
+        
+        // 한자어 정보 처리
+        let etymology = content.etymology || ''
+        if (content.hanja && Array.isArray(content.hanja)) {
+          // hanja 배열을 etymology 문자열로 변환
+          etymology = content.hanja.map(h => `${h.character}(${h.meaning} ${h.reading})`).join(' + ')
+        }
+        
+        wordData = {
+          word: newWord,
+          meaning: content.meaning || `${newWord}의 의미를 설명합니다.`,
+          etymology: etymology,
+          synonyms: content.synonyms || [],
+          antonyms: content.antonyms || [],
+          difficulty: content.difficulty || '★★★☆☆',
+          example: content.example || `${newWord}을(를) 사용한 예문입니다.`,
+          gradeAppropriate: content.gradeAppropriate !== false
+        }
       } else {
         // AI 실패 시 기본 데이터
         wordData = {
@@ -230,7 +243,25 @@ export default function VocabularyExtractor({ text, gradeLevel, onVocabularyChan
       setNewWord('')
     } catch (error) {
       console.error('어휘 생성 오류:', error)
-      setError('어휘 정보 생성 중 오류가 발생했습니다: ' + error.message)
+      // 오류 시에도 기본 데이터로 추가
+      const customWord = {
+        id: `custom_${Date.now()}`,
+        word: newWord,
+        meaning: `${newWord}의 의미를 입력하세요.`,
+        etymology: '',
+        synonyms: [],
+        antonyms: [],
+        difficulty: '★★★☆☆',
+        example: `${newWord}을(를) 사용한 예문을 입력하세요.`,
+        gradeAppropriate: true,
+        isChecked: true,
+        isCustom: true
+      }
+      
+      const updatedList = [...vocabularyList, customWord]
+      setVocabularyList(updatedList)
+      onVocabularyChange?.(updatedList)
+      setNewWord('')
     } finally {
       setIsGenerating(false)
     }

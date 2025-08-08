@@ -1,11 +1,25 @@
 import React, { memo, useRef, useEffect } from 'react'
 import ProgressBar from '../common/ProgressBar'
+import { GRADE_OPTIONS } from '../../utils/constants'
 
 /**
  * 문해력 분석 차트 컴포넌트 (메모이제이션)
  * @param {object} analysisResult - 분석 결과 데이터
  */
 const AnalysisChart = memo(function AnalysisChart({ analysisResult }) {
+  // 학년 코드를 한글로 변환하는 함수
+  const convertGradeToKorean = (text) => {
+    if (!text) return text
+    
+    let convertedText = text
+    GRADE_OPTIONS.forEach(grade => {
+      // elem4 -> 초등학교 4학년, middle2 -> 중학교 2학년 등으로 변환
+      const regex = new RegExp(grade.value, 'g')
+      convertedText = convertedText.replace(regex, grade.label)
+    })
+    
+    return convertedText
+  }
   const canvasRef = useRef(null)
 
   const analysisItems = [
@@ -195,7 +209,7 @@ const AnalysisChart = memo(function AnalysisChart({ analysisResult }) {
           </span>
         </div>
         <p className="text-sm text-gray-600 mt-2">
-          {analysisResult.analysis || '해당 학년 수준에 적합한 난이도입니다.'}
+          {convertGradeToKorean(analysisResult.analysis) || '해당 학년 수준에 적합한 난이도입니다.'}
         </p>
       </div>
     </div>
