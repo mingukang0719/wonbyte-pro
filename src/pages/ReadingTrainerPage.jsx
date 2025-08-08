@@ -35,6 +35,7 @@ import BookmarkManager from '../components/bookmarks/BookmarkManager'
 import WrongAnswerNote from '../components/wronganswers/WrongAnswerNote'
 import UserProfile from '../components/profile/UserProfile'
 import GameDashboard from '../components/gamification/GameDashboard'
+import WonbyteMode from '../components/literacy/WonbyteMode'
 
 export default function ReadingTrainerPage() {
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
@@ -47,6 +48,7 @@ export default function ReadingTrainerPage() {
   const [showWrongAnswers, setShowWrongAnswers] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showGameDashboard, setShowGameDashboard] = useState(false)
+  const [showWonbyteMode, setShowWonbyteMode] = useState(false)
   
   // 지문 생성 설정
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -715,6 +717,17 @@ export default function ReadingTrainerPage() {
               gradeLevel={selectedGrade}
             />
 
+            {/* 원바이트 모드 버튼 */}
+            <div className="mb-6 flex gap-4">
+              <button
+                onClick={() => setShowWonbyteMode(true)}
+                className="px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+              >
+                <BookOpen className="w-5 h-5" />
+                원바이트 모드
+              </button>
+            </div>
+
             {/* 문해력 분석 */}
             <div className="mb-6">
               <button
@@ -890,6 +903,18 @@ export default function ReadingTrainerPage() {
       {/* 게임 대시보드 */}
       {showGameDashboard && (
         <GameDashboard onClose={() => setShowGameDashboard(false)} />
+      )}
+      
+      {/* 원바이트 모드 */}
+      {showWonbyteMode && (
+        <WonbyteMode 
+          text={mode === 'generate' ? generatedText : userText}
+          onClose={() => setShowWonbyteMode(false)}
+          onComplete={(charsRead) => {
+            console.log(`완료! ${charsRead}자 읽음`)
+            setShowWonbyteMode(false)
+          }}
+        />
       )}
     </div>
   )
