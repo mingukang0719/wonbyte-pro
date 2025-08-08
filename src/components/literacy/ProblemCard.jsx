@@ -13,12 +13,14 @@ const ProblemCard = memo(function ProblemCard({ problem, index, type, onAnswerSe
   const [selectedOption, setSelectedOption] = useState(null)
   const [showResult, setShowResult] = useState(false)
   const [isCorrect, setIsCorrect] = useState(null)
+  const [showExplanation, setShowExplanation] = useState(false)
 
   const handleOptionSelect = (optionIndex) => {
     if (showResult) return // 이미 답을 확인한 경우
     
     setSelectedOption(optionIndex)
-    const correct = optionIndex === problem.answer
+    const correctAnswer = problem.answer !== undefined ? problem.answer : problem.correctAnswer
+    const correct = optionIndex === correctAnswer
     setIsCorrect(correct)
     setShowResult(true)
     
@@ -37,7 +39,7 @@ const ProblemCard = memo(function ProblemCard({ problem, index, type, onAnswerSe
       WrongAnswerManager.addWrongAnswer({
         question: problem.question,
         userAnswer: problem.options[optionIndex],
-        correctAnswer: problem.options[problem.answer],
+        correctAnswer: problem.options[correctAnswer],
         type: type === 'vocab' ? 'multiple_choice' : 'multiple_choice',
         context: context,
         explanation: problem.explanation || ''
@@ -61,7 +63,8 @@ const ProblemCard = memo(function ProblemCard({ problem, index, type, onAnswerSe
       <div className="space-y-2">
         {problem.options.map((option, optIndex) => {
           const isSelected = selectedOption === optIndex
-          const isCorrectOption = optIndex === problem.answer
+          const correctAnswer = problem.answer !== undefined ? problem.answer : problem.correctAnswer
+          const isCorrectOption = optIndex === correctAnswer
           
           return (
             <label 
@@ -99,11 +102,6 @@ const ProblemCard = memo(function ProblemCard({ problem, index, type, onAnswerSe
           isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
           {isCorrect ? '정답입니다! 🎉' : '아쉽네요. 다시 한번 도전해보세요!'}
-          {!isCorrect && problem.explanation && (
-            <p className="mt-2 text-sm text-gray-700">
-              <strong>해설:</strong> {problem.explanation}
-            </p>
-          )}
         </div>
       )}
     </div>

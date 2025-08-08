@@ -36,6 +36,7 @@ import WrongAnswerNote from '../components/wronganswers/WrongAnswerNote'
 import UserProfile from '../components/profile/UserProfile'
 import GameDashboard from '../components/gamification/GameDashboard'
 import WonbyteMode from '../components/literacy/WonbyteMode'
+import ExplanationModal from '../components/literacy/ExplanationModal'
 
 export default function ReadingTrainerPage() {
   const [mode, setMode] = useState('generate') // 'generate' or 'input'
@@ -49,6 +50,7 @@ export default function ReadingTrainerPage() {
   const [showProfile, setShowProfile] = useState(false)
   const [showGameDashboard, setShowGameDashboard] = useState(false)
   const [showWonbyteMode, setShowWonbyteMode] = useState(false)
+  const [showExplanations, setShowExplanations] = useState(false)
   
   // 지문 생성 설정
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -818,21 +820,30 @@ export default function ReadingTrainerPage() {
               </div>
             )}
 
-            {/* PDF 다운로드 버튼 */}
-            <div className="flex justify-between">
+            {/* 버튼들 */}
+            <div className="flex justify-between mt-6">
               <button
                 onClick={() => setStep(2)}
                 className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
               >
                 이전 단계
               </button>
-              <button
-                onClick={handlePDFDownload}
-                className="flex items-center px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download className="mr-2" />
-                PDF로 다운로드
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowExplanations(true)}
+                  className="flex items-center px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <BookOpen className="mr-2" />
+                  해설 보기
+                </button>
+                <button
+                  onClick={handlePDFDownload}
+                  className="flex items-center px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download className="mr-2" />
+                  PDF로 다운로드
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -914,6 +925,15 @@ export default function ReadingTrainerPage() {
             console.log(`완료! ${charsRead}자 읽음`)
             setShowWonbyteMode(false)
           }}
+        />
+      )}
+      
+      {/* 해설 모달 */}
+      {showExplanations && generatedProblems.length > 0 && (
+        <ExplanationModal
+          problems={generatedProblems}
+          context={mode === 'generate' ? generatedText : userText}
+          onClose={() => setShowExplanations(false)}
         />
       )}
     </div>

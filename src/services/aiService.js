@@ -290,6 +290,55 @@ class AIService {
     }
   }
 
+  // AI 해설 생성
+  async generateExplanation(params) {
+    try {
+      if (this.useClientAI) {
+        return await this.clientAIService.generateExplanation(params)
+      }
+
+      if (this.isDemo) {
+        // 데모 모드에서는 간단한 해설 생성
+        return {
+          success: true,
+          content: {
+            explanation: `이 문제는 ${params.type === 'multiple_choice' ? '객관식' : '서술형'} 문제입니다.\n\n정답: ${params.correctAnswer}\n\n이 답이 정답인 이유는 지문의 내용을 정확히 이해하고 분석했을 때 가장 적절한 답변이기 때문입니다. 문제를 풀 때는 항상 지문을 꼼꼼히 읽고, 핵심 내용을 파악하는 것이 중요합니다.`
+          }
+        }
+      }
+
+      const response = await fetch(`${this.baseURL}/api/ai/generate-explanation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'AI 해설 생성에 실패했습니다.')
+      }
+
+      return data
+
+    } catch (error) {
+      console.error('AI Explanation Error:', error)
+      // 오류 시 기본 해설 반환
+      return {
+        success: true,
+        content: {
+          explanation: params.explanation || '해설을 생성할 수 없습니다. 문제의 기본 해설을 참고해주세요.'
+        }
+      }
+    }
+  }
+
   // 콘텐츠 생성 헬퍼 메서드들
   async generateVocabulary(prompt, options = {}) {
     return this.generateContent({
