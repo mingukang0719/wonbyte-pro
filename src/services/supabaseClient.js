@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY
 
 let supabase
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('⚠️ Supabase 환경 변수가 설정되지 않았습니다.')
-  console.error('VITE_SUPABASE_URL:', supabaseUrl || '❌ 미설정')
-  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ 설정됨' : '❌ 미설정')
+  console.error('REACT_APP_SUPABASE_URL:', supabaseUrl || '❌ 미설정')
+  console.error('REACT_APP_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ 설정됨' : '❌ 미설정')
   console.error('Netlify에서 환경 변수를 설정해주세요: Site configuration → Environment variables')
   
   // 더미 supabase 객체 반환하여 앱이 크래시하지 않도록 함

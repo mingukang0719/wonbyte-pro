@@ -49,10 +49,11 @@ export default function CreateAssignmentPage() {
         .select('*')
         .eq('role', 'student')
 
-      // 교사인 경우 자신의 학생만
+      // 관리자(admin)가 아닌 경우에만 필터링
       if (profile.role === 'teacher') {
         query = query.eq('teacher_id', user.id)
       }
+      // admin인 경우 모든 학생 조회 (필터링 없음)
 
       const { data, error } = await query
       if (!error && data) {

@@ -67,10 +67,15 @@ module.exports = (env, argv) => {
     },
     plugins: [
       new webpack.DefinePlugin({
+        'process.env': JSON.stringify({
+          REACT_APP_SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
+          REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
+          REACT_APP_API_URL: process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+        }),
         'import.meta.env': JSON.stringify({
-          VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || '',
-          VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || '',
-          VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+          VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '',
+          VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '',
+          VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
         }),
       }),
       new HtmlWebpackPlugin({
@@ -84,7 +89,7 @@ module.exports = (env, argv) => {
             }),
             new CopyWebpackPlugin({
               patterns: [
-                { from: '_redirects', to: '_redirects', noErrorOnMissing: true },
+                { from: 'public/_redirects', to: '_redirects', noErrorOnMissing: true },
                 { from: 'public/_headers', to: '_headers', noErrorOnMissing: true },
               ],
             }),

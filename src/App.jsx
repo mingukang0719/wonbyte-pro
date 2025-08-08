@@ -10,6 +10,9 @@ import StudentDashboardPage from './pages/StudentDashboardPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import SystemManagePage from './pages/admin/SystemManagePage'
 import CreateAssignmentPage from './pages/admin/CreateAssignmentPage'
+import UserManagementPage from './pages/admin/UserManagementPage'
+import StudentDetailPage from './pages/admin/StudentDetailPage'
+import StudentProfilePage from './pages/StudentProfilePage'
 import ReadingTrainerPage from './pages/ReadingTrainerPage'
 import EditorPage from './pages/EditorPage'
 
@@ -50,6 +53,14 @@ function App() {
               </PrivateRoute>
             } 
           />
+          <Route 
+            path="/profile" 
+            element={
+              <PrivateRoute allowedRoles={['student']}>
+                <StudentProfilePage />
+              </PrivateRoute>
+            } 
+          />
 
           {/* Admin Routes */}
           <Route 
@@ -68,6 +79,14 @@ function App() {
               </PrivateRoute>
             } 
           />
+          <Route 
+            path="/admin/students/:id" 
+            element={
+              <PrivateRoute allowedRoles={['teacher', 'parent', 'admin']}>
+                <StudentDetailPage />
+              </PrivateRoute>
+            } 
+          />
           
           {/* System Admin Routes */}
           <Route 
@@ -75,6 +94,14 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['admin']}>
                 <SystemManagePage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <UserManagementPage />
               </PrivateRoute>
             } 
           />
